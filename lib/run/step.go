@@ -18,12 +18,12 @@ const (
 )
 
 type Step struct {
-	UUID      string    `json:"uuid"`  // unique identifier of this specific Step in a Run.
-	Input     InputData `json:"input"` // generic input to the phase, including jobs.
+	UUID      string    `json:"uuid"`
+	Input     InputData `json:"input"`
 	OnFailure *Step     `json:"on_failure"`
 	OnSuccess *Step     `json:"on_success"`
-	Output    Result    `json:"output"` // take this output and add it to the Run input. This might not be a field or anything like that, just an implementation detail.
-	State     State     `json:"state"`  // blocked/queued? running, completed, failed.
+	Output    Result    `json:"output"`
+	State     State     `json:"state"`
 	StepType  string    `json:"step_type"`
 }
 

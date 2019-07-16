@@ -18,7 +18,6 @@ func DBConnection(t *testing.T, logMode ...bool) (*database.DB, func()) {
 	if dbURL == "" {
 		dbURL = "postgres://localhost:5432/relay_test?sslmode=disable"
 	}
-	fmt.Println("connecting to db: ", dbURL)
 	db, err := database.Connect(dbURL, dbURL, false)
 	if err != nil {
 		panic(fmt.Errorf("Could not connect to DB: %v\n", err))
