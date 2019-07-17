@@ -11,7 +11,9 @@ import (
 type LocalParser struct{}
 
 type localWebhook struct {
-	JobName string `json:"job_name"`
+	JobName string                 `json:"job_name"`
+	Scope   string                 `json:"scope"`
+	Input   map[string]interface{} `json:"input_data"`
 }
 
 func (*LocalParser) Parse(r *http.Request) (run.Trigger, error) {
@@ -24,5 +26,7 @@ func (*LocalParser) Parse(r *http.Request) (run.Trigger, error) {
 
 	return run.Trigger{
 		JobName: payload.JobName,
+		Scope:   payload.Scope,
+		Input:   payload.Input,
 	}, nil
 }
