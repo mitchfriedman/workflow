@@ -75,7 +75,7 @@ func NewEngine(w *worker.Worker, ss *run.StepperStore, rr run.Repo, wr worker.Re
 }
 
 func (e *Engine) Start(ctx context.Context) error {
-	e.heartbeat(ctx)
+	go e.heartbeat(ctx)
 
 	var terminate bool
 	var termMu sync.RWMutex
@@ -125,16 +125,14 @@ func (e *Engine) process() error {
 }
 
 func (e *Engine) heartbeat(ctx context.Context) {
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-time.After(e.leaseRenewDuration):
-				e.heartbeats <- worker.Heartbeat{WorkerID: e.w.UUID, LeaseDuration: e.leaseDuration}
-			default:
-				time.Sleep(1 * time.Second)
-			}
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(e.leaseRenewDuration):
+			e.heartbeats <- worker.Heartbeat{WorkerID: e.w.UUID, LeaseDuration: e.leaseDuration}
+		default:
+			time.Sleep(50 * time.Millisecond)
 		}
-	}()
+	}
 }

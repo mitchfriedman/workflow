@@ -3,10 +3,11 @@ package worker_test
 import (
 	"context"
 	"fmt"
-	"github.com/mitchfriedman/workflow/lib/worker"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/mitchfriedman/workflow/lib/worker"
 )
 
 type fakeLeaser struct {
@@ -37,7 +38,7 @@ func TestHeartbeatProcessor(t *testing.T) {
 	wg.Add(1)
 
 	ctx, cancel := context.WithCancel(context.Background())
-	func() {
+	go func() {
 		defer wg.Done()
 		hbp.Start(ctx)
 	}()

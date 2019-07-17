@@ -16,7 +16,7 @@ func DBConnection(t *testing.T, logMode ...bool) (*database.DB, func()) {
 	t.Helper()
 	dbURL := os.Getenv("DATABASE_URL")
 	if dbURL == "" {
-		dbURL = "postgres://localhost:5432/relay_test?sslmode=disable"
+		dbURL = "postgres://localhost:5432/workflow?sslmode=disable"
 	}
 	db, err := database.Connect(dbURL, dbURL, false)
 	if err != nil {

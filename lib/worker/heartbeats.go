@@ -25,20 +25,18 @@ func NewHeartbeatProcessor(hb chan Heartbeat, leaser Leaser) *HeartbeatProcessor
 }
 
 func (h *HeartbeatProcessor) Start(ctx context.Context) {
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case hb, ok := <-h.hb:
+			if !ok {
 				return
-			case hb, ok := <-h.hb:
-				if !ok {
-					return
-				}
-				err := h.l.RenewLease(ctx, hb.WorkerID, hb.LeaseDuration)
-				if err != nil {
-					h.logger.Printf("heartbeat: failed to renew lease: %v", err)
-				}
+			}
+			err := h.l.RenewLease(ctx, hb.WorkerID, hb.LeaseDuration)
+			if err != nil {
+				h.logger.Printf("heartbeat: failed to renew lease: %v", err)
 			}
 		}
-	}()
+	}
 }
