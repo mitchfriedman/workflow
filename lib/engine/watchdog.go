@@ -14,16 +14,14 @@ import (
 var watchDuration = 10 * time.Second
 
 func Watch(ctx context.Context, logger *log.Logger, wr worker.Repo, rr run.Repo) {
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				break
-			case <-time.After(watchDuration):
-				Process(ctx, logger, wr, rr)
-			}
+	for {
+		select {
+		case <-ctx.Done():
+			break
+		case <-time.After(watchDuration):
+			Process(ctx, logger, wr, rr)
 		}
-	}()
+	}
 }
 
 func Process(ctx context.Context, logger *log.Logger, wr worker.Repo, rr run.Repo) {
