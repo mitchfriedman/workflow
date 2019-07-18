@@ -32,7 +32,7 @@ func TestWatchdog(t *testing.T) {
 
 	currentWorker := worker.NewWorker()
 	currentWorker.LastUpdated = earlier
-	currentWorker.LeaseClaimedUntil = time.Now().Add(2 * time.Minute)
+	currentWorker.LeaseClaimedUntil = time.Now().UTC().Add(2 * time.Minute)
 
 	currentInProgressRun := testhelpers.CreateSampleRun("job", "s2", make(run.InputData))
 	currentInProgressRun.ClaimedBy = &currentWorker.UUID
@@ -40,7 +40,7 @@ func TestWatchdog(t *testing.T) {
 
 	oldWorker := worker.NewWorker()
 	oldWorker.LastUpdated = earlier
-	oldWorker.LeaseClaimedUntil = time.Now().AddDate(0, 0, -1)
+	oldWorker.LeaseClaimedUntil = time.Now().UTC().AddDate(0, 0, -1)
 
 	tests := map[string]struct {
 		runsBefore         []*run.Run

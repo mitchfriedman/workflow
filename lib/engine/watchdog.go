@@ -45,7 +45,7 @@ func cleanupWorkers(ctx context.Context, wr worker.Repo) error {
 	}
 
 	for _, w := range allWorkers {
-		if w.LeaseClaimedUntil.After(time.Now().UTC()) {
+		if w.LeaseClaimedUntil.UTC().After(time.Now().UTC()) {
 			continue
 		}
 
