@@ -39,14 +39,14 @@ func testHeartbeatsIncoming(t *testing.T, ctx context.Context, hbs chan worker.H
 			case <-ctx.Done():
 				return
 			case <-hbs:
-				lastHbTime = time.Now()
+				lastHbTime = time.Now().UTC()
 			case <-time.After(2 * hbDuration):
 				var empty time.Time
 				if lastHbTime == empty {
 					continue
 				}
 
-				if time.Now().Sub(lastHbTime) > hbDuration {
+				if time.Now().UTC().Sub(lastHbTime) > hbDuration {
 					missed++
 					if missed > 10 {
 						t.Error("missed more than 10 heartbeats")

@@ -23,8 +23,8 @@ func TestWatchdog(t *testing.T) {
 	wr := worker.NewDatabaseStorage(db)
 
 	aWorkerID := "123"
-	earlier := time.Now().AddDate(0, 0, -1)
-	later := time.Now().Add(2 * time.Minute)
+	earlier := time.Now().UTC().AddDate(0, 0, -1)
+	later := time.Now().UTC().Add(2 * time.Minute)
 
 	oldInProgressRun := testhelpers.CreateSampleRun("job", "s1", make(run.InputData))
 	oldInProgressRun.ClaimedBy = &aWorkerID

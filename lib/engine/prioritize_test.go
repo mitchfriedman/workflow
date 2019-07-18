@@ -17,8 +17,8 @@ func TestPrioritize(t *testing.T) {
 	j2s1 := testhelpers.CreateSampleRun("job", "s1", make(run.InputData))
 	j3s1 := testhelpers.CreateSampleRun("job", "s1", make(run.InputData))
 	j4s1 := testhelpers.CreateSampleRun("job", "s1", make(run.InputData))
-	n := time.Now()
-	later := time.Now().Add(10 * time.Second)
+	n := time.Now().UTC()
+	later := time.Now().UTC().Add(10 * time.Second)
 	workerId := "123"
 	j3s1.LastStepComplete = &n
 	j4s1.LastStepComplete = &n

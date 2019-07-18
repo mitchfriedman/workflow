@@ -65,7 +65,7 @@ func TestExecutor(t *testing.T) {
 
 	var timeBegin time.Time
 	for i := 0; i < 3; i++ { // 3 steps in run.
-		timeBegin = time.Now()
+		timeBegin = time.Now().UTC()
 		err := executor.Execute(context.Background())
 		assert.Nil(t, err)
 		r := getRun(r.UUID)

@@ -42,7 +42,7 @@ func (r *Storage) Create(d *Run) error {
 	if err != nil {
 		return err
 	}
-	d.Started = time.Now()
+	d.Started = time.Now().UTC()
 
 	return r.db.Master.Create(&d).Error
 }
@@ -73,7 +73,7 @@ func (r *Storage) Claim(t *Run, workerID string, d time.Duration) error {
 		return err
 	}
 
-	n := time.Now().Add(d)
+	n := time.Now().UTC().Add(d)
 	t.ClaimedBy = &workerID
 	t.ClaimedUntil = &n
 
@@ -89,7 +89,7 @@ func (r *Storage) Release(d *Run) error {
 		return err
 	}
 
-	n := time.Now()
+	n := time.Now().UTC()
 	d.ClaimedBy = nil
 	d.ClaimedUntil = nil
 	d.LastStepComplete = &n

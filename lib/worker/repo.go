@@ -38,8 +38,8 @@ func NewDatabaseStorage(db *database.DB) *DatabaseStorage {
 }
 
 func (d *DatabaseStorage) RenewLease(ctx context.Context, w *Worker, t time.Duration) error {
-	w.LastUpdated = time.Now()
-	w.LeaseClaimedUntil = time.Now().Add(t)
+	w.LastUpdated = time.Now().UTC()
+	w.LeaseClaimedUntil = time.Now().UTC().Add(t)
 	return d.db.Master.Model(&w).Where("uuid = ?", w.UUID).Update(&w).Error
 }
 
