@@ -14,7 +14,7 @@ type Repo interface {
 }
 
 type Leaser interface {
-	RenewLease(context.Context, string, time.Duration) error
+	RenewLease(context.Context, *Worker, time.Duration) error
 }
 
 type Registerer interface {
@@ -34,12 +34,10 @@ func NewDatabaseStorage(db *database.DB) *DatabaseStorage {
 	return &DatabaseStorage{db: db}
 }
 
-func (d *DatabaseStorage) RenewLease(ctx context.Context, id string, t time.Duration) error {
-	w := &Worker{UUID: id}
-	return d.db.Master.Model(&w).
-		Where("uuid = ?", id).
-		Update("last_updated = ?", time.Now().UnixNano()).
-		Update("lease_claimed_until = ?", time.Now().Add(t)).Error
+func (d *DatabaseStorage) RenewLease(ctx context.Context, w *Worker, t time.Duration) error {
+	w.LastUpdated = time.Now()
+	w.LeaseClaimedUntil = time.Now().Add(t)
+	return d.db.Master.Model(&w).Where("uuid = ?", w.UUID).Error
 }
 
 func (d *DatabaseStorage) Register(ctx context.Context, w *Worker) error {

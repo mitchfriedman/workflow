@@ -15,7 +15,7 @@ type fakeLeaser struct {
 	counterMu sync.Mutex
 }
 
-func (f *fakeLeaser) RenewLease(context.Context, string, time.Duration) error {
+func (f *fakeLeaser) RenewLease(context.Context, *worker.Worker, time.Duration) error {
 	f.counterMu.Lock()
 	f.counter++
 	f.counterMu.Unlock()
@@ -45,7 +45,7 @@ func TestHeartbeatProcessor(t *testing.T) {
 
 	go func() {
 		for i := 0; i < 10; i++ {
-			hbs <- worker.Heartbeat{WorkerID: fmt.Sprintf("%d", i), LeaseDuration: time.Millisecond}
+			hbs <- worker.Heartbeat{Worker: worker.Worker{UUID: fmt.Sprintf("%d", i)}, LeaseDuration: time.Millisecond}
 		}
 	}()
 

@@ -130,7 +130,7 @@ func (e *Engine) heartbeat(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case <-time.After(e.leaseRenewDuration):
-			e.heartbeats <- worker.Heartbeat{WorkerID: e.w.UUID, LeaseDuration: e.leaseDuration}
+			e.heartbeats <- worker.Heartbeat{Worker: *e.w, LeaseDuration: e.leaseDuration}
 		default:
 			time.Sleep(50 * time.Millisecond)
 		}

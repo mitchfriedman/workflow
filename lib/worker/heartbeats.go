@@ -7,7 +7,7 @@ import (
 )
 
 type Heartbeat struct {
-	WorkerID      string
+	Worker        Worker
 	LeaseDuration time.Duration
 }
 
@@ -17,10 +17,10 @@ type HeartbeatProcessor struct {
 	logger log.Logger
 }
 
-func NewHeartbeatProcessor(hb chan Heartbeat, leaser Leaser) *HeartbeatProcessor {
+func NewHeartbeatProcessor(hb chan Heartbeat, l Leaser) *HeartbeatProcessor {
 	return &HeartbeatProcessor{
 		hb: hb,
-		l:  leaser,
+		l:  l,
 	}
 }
 
@@ -33,7 +33,7 @@ func (h *HeartbeatProcessor) Start(ctx context.Context) {
 			if !ok {
 				return
 			}
-			err := h.l.RenewLease(ctx, hb.WorkerID, hb.LeaseDuration)
+			err := h.l.RenewLease(ctx, &hb.Worker, hb.LeaseDuration)
 			if err != nil {
 				h.logger.Printf("heartbeat: failed to renew lease: %v", err)
 			}
