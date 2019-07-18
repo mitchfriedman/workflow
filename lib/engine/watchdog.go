@@ -2,7 +2,6 @@ package engine
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"time"
 
@@ -46,7 +45,6 @@ func cleanupWorkers(ctx context.Context, wr worker.Repo) error {
 	}
 
 	for _, w := range allWorkers {
-		fmt.Printf("lease claimed: %s, n: %s, diff: %v", w.LeaseClaimedUntil.UTC().Format(time.RFC3339), time.Now().UTC().Format(time.RFC3339), time.Now().UTC().Sub(w.LeaseClaimedUntil))
 		if w.LeaseClaimedUntil.UTC().After(time.Now().UTC()) {
 			continue
 		}
