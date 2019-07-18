@@ -4,13 +4,15 @@ import (
 	"context"
 	"time"
 
+	"github.com/jinzhu/gorm"
+
 	database "github.com/mitchfriedman/workflow/lib/db"
 )
 
 type Repo interface {
 	Leaser
 	Registerer
-	Lister
+	Retriever
 }
 
 type Leaser interface {
@@ -22,8 +24,9 @@ type Registerer interface {
 	Deregister(context.Context, string) error
 }
 
-type Lister interface {
+type Retriever interface {
 	List(context.Context) ([]*Worker, error)
+	Get(context.Context, string) (*Worker, error)
 }
 
 type DatabaseStorage struct {
@@ -53,4 +56,14 @@ func (d *DatabaseStorage) List(ctx context.Context) ([]*Worker, error) {
 	var all []*Worker
 	err := d.db.Reader.Find(&all).Error
 	return all, err
+}
+
+func (d *DatabaseStorage) Get(ctx context.Context, uuid string) (*Worker, error) {
+	var w Worker
+	err := d.db.Reader.Where("uuid = ?", uuid).First(&w).Error
+	switch err {
+	case gorm.ErrRecordNotFound:
+		return nil, nil
+	}
+	return &w, err
 }

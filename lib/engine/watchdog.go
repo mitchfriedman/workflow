@@ -33,7 +33,7 @@ func Process(ctx context.Context, logger *log.Logger, wr worker.Repo, rr run.Rep
 		return
 	}
 
-	if err := cleanupRuns(ctx, rr); err != nil {
+	if err := cleanupRuns(ctx, rr, wr); err != nil {
 		logger.Printf("watchdog: failed to cleanup runs: %v", err)
 	}
 }
@@ -57,19 +57,32 @@ func cleanupWorkers(ctx context.Context, wr worker.Repo) error {
 	return nil
 }
 
-func cleanupRuns(ctx context.Context, rr run.Repo) error {
+func cleanupRuns(ctx context.Context, rr run.Repo, wr worker.Repo) error {
 	runs, err := rr.ClaimedRuns(ctx)
 	if err != nil {
 		return errors.Wrap(err, "failed to fetch claimed runs")
 	}
 
 	for _, r := range runs {
-		if r.ClaimedUntil == nil || (*r.ClaimedUntil).After(time.Now()) {
+		// if it's currently unclaimed, there's nothing to do for this run.
+		if r.ClaimedBy == nil && r.ClaimedUntil == nil {
 			continue
 		}
 
+		// fetch this worker and see if it is still around.
+		w, err := wr.Get(context.Background(), *r.ClaimedBy)
+		if err != nil {
+			return errors.Wrapf(err, "cleanupRuns: failed to get run: %v", r)
+		}
+
+		// the worker is present.
+		if w != nil {
+			continue
+		}
+
+		// the worker is no longer with us, let's release this run and let another claim it.
 		if err := rr.Release(r); err != nil {
-			return errors.Wrapf(err, "failed to release run: %v", r)
+			return errors.Wrapf(err, "cleanupRuns: failed to release run: %v", r)
 		}
 	}
 

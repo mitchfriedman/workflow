@@ -30,17 +30,17 @@ func TestWatchdog(t *testing.T) {
 	oldInProgressRun.ClaimedBy = &aWorkerID
 	oldInProgressRun.ClaimedUntil = &earlier
 
+	currentWorker := worker.NewWorker()
+	currentWorker.LastUpdated = earlier
+	currentWorker.LeaseClaimedUntil = time.Now().Add(2 * time.Minute)
+
 	currentInProgressRun := testhelpers.CreateSampleRun("job", "s2", make(run.InputData))
-	currentInProgressRun.ClaimedBy = &aWorkerID
+	currentInProgressRun.ClaimedBy = &currentWorker.UUID
 	currentInProgressRun.ClaimedUntil = &later
 
 	oldWorker := worker.NewWorker()
 	oldWorker.LastUpdated = earlier
 	oldWorker.LeaseClaimedUntil = time.Now().AddDate(0, 0, -1)
-
-	currentWorker := worker.NewWorker()
-	currentWorker.LastUpdated = earlier
-	currentWorker.LeaseClaimedUntil = time.Now().Add(2 * time.Minute)
 
 	tests := map[string]struct {
 		runsBefore         []*run.Run
@@ -51,7 +51,7 @@ func TestWatchdog(t *testing.T) {
 	}{
 		"with no existing workers or runs":                               {[]*run.Run{}, []*worker.Worker{}, []*run.Run{}, []*run.Run{}, []*worker.Worker{}},
 		"with runs to release":                                           {[]*run.Run{oldInProgressRun}, []*worker.Worker{}, []*run.Run{}, []*run.Run{oldInProgressRun}, []*worker.Worker{}},
-		"with runs to leave and release":                                 {[]*run.Run{oldInProgressRun, currentInProgressRun}, []*worker.Worker{}, []*run.Run{currentInProgressRun}, []*run.Run{oldInProgressRun}, []*worker.Worker{}},
+		"with runs to leave and release":                                 {[]*run.Run{oldInProgressRun, currentInProgressRun}, []*worker.Worker{currentWorker}, []*run.Run{currentInProgressRun}, []*run.Run{oldInProgressRun}, []*worker.Worker{currentWorker}},
 		"with workers to remove":                                         {[]*run.Run{}, []*worker.Worker{oldWorker}, []*run.Run{}, []*run.Run{}, []*worker.Worker{}},
 		"with workers to leave":                                          {[]*run.Run{}, []*worker.Worker{currentWorker}, []*run.Run{}, []*run.Run{}, []*worker.Worker{currentWorker}},
 		"with workers to leave and remove and runs to leave and release": {[]*run.Run{oldInProgressRun, currentInProgressRun}, []*worker.Worker{currentWorker, oldWorker}, []*run.Run{currentInProgressRun}, []*run.Run{oldInProgressRun}, []*worker.Worker{currentWorker}},
