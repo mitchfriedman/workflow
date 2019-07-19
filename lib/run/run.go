@@ -72,7 +72,7 @@ type Data struct {
 
 func NewRun(j Job, trigger Trigger) *Run {
 	id := generateUUID("RU")
-	steps := generateGraph(j.Start)
+	steps := generateGraphFromStepTemplate(j.Start)
 	steps.State = StateQueued
 
 	return &Run{

@@ -47,16 +47,16 @@ type Result struct {
 	Error error     `json:"error"`
 }
 
-func generateGraph(s *Step) *Step {
+func generateGraphFromStepTemplate(s *Step) *Step {
 	if s == nil {
 		return nil
 	}
 
 	step := stepFactory(s.StepType)
-	step.OnSuccess = generateGraph(s.OnSuccess)
-	step.OnFailure = generateGraph(s.OnFailure)
+	step.OnSuccess = generateGraphFromStepTemplate(s.OnSuccess)
+	step.OnFailure = generateGraphFromStepTemplate(s.OnFailure)
 
-	return s
+	return step
 }
 
 func generateUUID(prefix string) string {
