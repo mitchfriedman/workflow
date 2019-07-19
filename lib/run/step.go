@@ -52,7 +52,7 @@ func generateGraphFromStepTemplate(s *Step) *Step {
 		return nil
 	}
 
-	step := stepFactory(s.StepType)
+	step := stepFactory(s)
 	step.OnSuccess = generateGraphFromStepTemplate(s.OnSuccess)
 	step.OnFailure = generateGraphFromStepTemplate(s.OnFailure)
 
@@ -63,12 +63,12 @@ func generateUUID(prefix string) string {
 	return fmt.Sprintf("%s-%s", prefix, string(uuid.New().String()))
 }
 
-func stepFactory(t string) *Step {
+func stepFactory(t *Step) *Step {
 	pID := generateUUID("ST")
 	return &Step{
-		UUID:     pID,
-		StepType: t,
+		Input:    t.Input,
 		State:    StateQueued,
-		Input:    make(InputData),
+		StepType: t.StepType,
+		UUID:     pID,
 	}
 }

@@ -142,7 +142,6 @@ func TestEngine(t *testing.T) {
 			assert.Nil(t, json.Unmarshal([]byte(r.Data), &rd))
 			r.Input = rd.Input
 			r.Steps = rd.Steps
-			r.Job = rd.Job
 
 			assert.Equal(t, run.State(r.State), tc.finalState)
 			ensureStepsStatus(t, r.Steps, tc.failureStepName, tc.finalState)

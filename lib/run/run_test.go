@@ -87,11 +87,11 @@ func TestNextStep(t *testing.T) {
 		input  run.InputData
 		err    error
 	}{
-		"run not started":                             {run: r1, action: r1.Job.Start.StepType, input: r1.Input},
-		"run started, on second, success":             {run: r2, action: r2.Job.Start.OnSuccess.StepType, input: r2Input1},
-		"run started, on third, both success":         {run: r3, action: r3.Job.Start.OnSuccess.OnSuccess.StepType, input: r3Input1},
-		"run started, on second, failure":             {run: r4, action: r4.Job.Start.OnFailure.StepType, input: r2Input2},
-		"run started, on third, failure then success": {run: r5, action: r5.Job.Start.OnFailure.OnSuccess.StepType, input: r3Input2},
+		"run not started":                             {run: r1, action: r1.Steps.StepType, input: r1.Input},
+		"run started, on second, success":             {run: r2, action: r2.Steps.OnSuccess.StepType, input: r2Input1},
+		"run started, on third, both success":         {run: r3, action: r3.Steps.OnSuccess.OnSuccess.StepType, input: r3Input1},
+		"run started, on second, failure":             {run: r4, action: r4.Steps.OnFailure.StepType, input: r2Input2},
+		"run started, on third, failure then success": {run: r5, action: r5.Steps.OnFailure.OnSuccess.StepType, input: r3Input2},
 	}
 
 	for name, tc := range tests {

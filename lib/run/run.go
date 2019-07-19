@@ -19,7 +19,6 @@ type Trigger struct {
 // Run is an instantiation of a Job.
 type Run struct {
 	Input InputData       `sql:"-"`
-	Job   Job             `sql:"-"`
 	Steps *Step           `sql:"-"`
 	Data  json.RawMessage `gorm:"type:jsonb;"`
 
@@ -40,7 +39,6 @@ func (r *Run) MarshalRunData() error {
 	rd := Data{
 		Input: r.Input,
 		Steps: r.Steps,
-		Job:   r.Job,
 	}
 	var err error
 	r.Data, err = json.Marshal(&rd)
@@ -55,7 +53,6 @@ func (r *Run) UnmarshalRunData() error {
 	}
 	r.Input = rd.Input
 	r.Steps = rd.Steps
-	r.Job = rd.Job
 
 	return nil
 }
@@ -78,7 +75,6 @@ func NewRun(j Job, trigger Trigger) *Run {
 	return &Run{
 		Input:   trigger.Input,
 		JobName: j.Name,
-		Job:     j,
 		Scope:   trigger.Scope,
 		State:   StateQueued,
 		UUID:    id,
