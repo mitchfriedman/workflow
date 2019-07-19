@@ -37,6 +37,9 @@ func TestNextStep(t *testing.T) {
 	jobInput := map[string]interface{}{
 		"foo": "bar",
 	}
+	r1Input := map[string]interface{}{
+		"foo": "bar",
+	}
 	r2Input1 := map[string]interface{}{
 		"foo":  "bar",
 		"foo2": "bar2",
@@ -56,6 +59,8 @@ func TestNextStep(t *testing.T) {
 		"foo3": "bar3",
 	}
 	r1 := testhelpers.CreateSampleRun("job", "s1", jobInput)
+	r1Input["run_uuid"] = r1.UUID
+	r1Input["step_uuid"] = r1.Steps.UUID
 	s1Output := testhelpers.CreateSampleResultWithOutput(run.StateSuccess, "foo2", "bar2")
 	s2Output := testhelpers.CreateSampleResultWithOutput(run.StateSuccess, "foo3", "bar3")
 
@@ -87,7 +92,7 @@ func TestNextStep(t *testing.T) {
 		input  run.InputData
 		err    error
 	}{
-		"run not started":                             {run: r1, action: r1.Steps.StepType, input: r1.Input},
+		"run not started":                             {run: r1, action: r1.Steps.StepType, input: r1Input},
 		"run started, on second, success":             {run: r2, action: r2.Steps.OnSuccess.StepType, input: r2Input1},
 		"run started, on third, both success":         {run: r3, action: r3.Steps.OnSuccess.OnSuccess.StepType, input: r3Input1},
 		"run started, on second, failure":             {run: r4, action: r4.Steps.OnFailure.StepType, input: r2Input2},

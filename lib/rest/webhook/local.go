@@ -24,6 +24,10 @@ func (*LocalParser) Parse(r *http.Request) (run.Trigger, error) {
 		return run.Trigger{}, errors.Wrapf(err, "failed to Parse request body")
 	}
 
+	if payload.Input == nil {
+		payload.Input = make(map[string]interface{})
+	}
+
 	return run.Trigger{
 		JobName: payload.JobName,
 		Scope:   payload.Scope,

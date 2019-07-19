@@ -101,7 +101,7 @@ func findFirstQueuedStepAndHydrateInput(s *Step, d InputData) (*Step, InputData,
 	}
 
 	if s.State == StateQueued {
-		return s, d, nil
+		return s, d.Merge(s.Input), nil
 	}
 
 	if s.State == StateSuccess {
