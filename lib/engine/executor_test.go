@@ -16,12 +16,12 @@ func TestCalculateRunStateTransition(t *testing.T) {
 	ns := run.Step{}
 
 	tests := map[string]struct {
-		resultState      run.State
-		isRollback       bool
-		onFailure        *run.Step
-		onSuccess        *run.Step
-		expectedRunState run.State
-		expectedRollback bool
+		resultState  run.State
+		isRollback   bool
+		onFailure    *run.Step
+		onSuccess    *run.Step
+		wantRunState run.State
+		wantRollback bool
 	}{
 		"success, with next step, not rollback": {run.StateSuccess, false, nil, &ns, run.StateQueued, false},
 		"success, with next step, rollback":     {run.StateSuccess, true, nil, &ns, run.StateQueued, true},
@@ -38,9 +38,9 @@ func TestCalculateRunStateTransition(t *testing.T) {
 	for name, tc := range tests {
 		tc := tc
 		t.Run(name, func(t *testing.T) {
-			ars, arb := engine.CalculateRunStateTransition(tc.resultState, tc.isRollback, tc.onFailure, tc.onSuccess)
-			assert.Equal(t, tc.expectedRunState, ars)
-			assert.Equal(t, tc.expectedRollback, arb)
+			ars, arb := engine.CalculateRunStateTransition(tc.resultState, tc.isRollback, tc.onSuccess, tc.onFailure)
+			assert.Equal(t, tc.wantRunState, ars)
+			assert.Equal(t, tc.wantRollback, arb)
 		})
 	}
 }
