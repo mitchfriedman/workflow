@@ -85,7 +85,7 @@ func (p *Executor) updateAndReleaseRun(result run.Result, r *run.Run, s *run.Ste
 	return p.runRepo.Release(r)
 }
 
-func CalculateRunStateTransition(resultState run.State, isRollback bool, onFailure, onSuccess *run.Step) (run.State, bool) {
+func CalculateRunStateTransition(resultState run.State, isRollback bool, onSuccess, onFailure *run.Step) (run.State, bool) {
 	/* The state transition logic can be described as follows:
 	1. step success?
 		-> have an OnSuccess?

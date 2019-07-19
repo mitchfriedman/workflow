@@ -52,6 +52,7 @@ func TestExecutor(t *testing.T) {
 	ss := testhelpers.CreateStepperStore()
 
 	r := testhelpers.CreateSampleRun("job", "s1", make(run.InputData))
+	r.Steps.OnSuccess.OnSuccess.OnSuccess = nil
 	assert.Nil(t, repo.Create(r))
 
 	executor := engine.NewExecutor("123", repo, ss)
