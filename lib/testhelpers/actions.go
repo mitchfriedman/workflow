@@ -20,5 +20,6 @@ func CreateStep(t string) *run.Step {
 		StepType: t,
 		State:    run.StateQueued,
 		Input:    nil,
+		Output:   run.Result{Data: make(map[string]interface{})},
 	}
 }

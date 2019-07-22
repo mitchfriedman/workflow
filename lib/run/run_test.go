@@ -86,6 +86,15 @@ func TestNextStep(t *testing.T) {
 	r3Input2["run_uuid"] = r5.UUID
 	r3Input2["step_uuid"] = r5.Steps.OnFailure.OnSuccess.UUID
 
+	r6 := testhelpers.CreateSampleRun("job", "s1", jobInput)
+	r6.Steps.Output.Data["some_key"] = "some_value"
+	r6Input := map[string]interface{}{
+		"foo":       "bar",
+		"run_uuid":  r6.UUID,
+		"step_uuid": r6.Steps.UUID,
+		"some_key":  "some_value",
+	}
+
 	tests := map[string]struct {
 		run    *run.Run
 		action string
@@ -97,6 +106,7 @@ func TestNextStep(t *testing.T) {
 		"run started, on third, both success":         {run: r3, action: r3.Steps.OnSuccess.OnSuccess.StepType, input: r3Input1},
 		"run started, on second, failure":             {run: r4, action: r4.Steps.OnFailure.StepType, input: r2Input2},
 		"run started, on third, failure then success": {run: r5, action: r5.Steps.OnFailure.OnSuccess.StepType, input: r3Input2},
+		"run started, already ran, uses output":       {run: r6, action: r6.Steps.StepType, input: r6Input},
 	}
 
 	for name, tc := range tests {

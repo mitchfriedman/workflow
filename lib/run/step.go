@@ -70,5 +70,6 @@ func stepFactory(t *Step) *Step {
 		State:    StateQueued,
 		StepType: t.StepType,
 		UUID:     pID,
+		Output:   Result{Data: make(map[string]interface{})},
 	}
 }
