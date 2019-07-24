@@ -64,7 +64,7 @@ func (p *Executor) Execute(ctx context.Context) error {
 		return err
 	}
 
-	return p.updateAndReleaseRun(result, r, s)
+	return p.updateAndReleaseRun(result, r, s, input)
 }
 
 func (p *Executor) abortRun(r *run.Run) error {
@@ -72,11 +72,12 @@ func (p *Executor) abortRun(r *run.Run) error {
 	return p.runRepo.Release(r)
 }
 
-func (p *Executor) updateAndReleaseRun(result run.Result, r *run.Run, s *run.Step) error {
+func (p *Executor) updateAndReleaseRun(result run.Result, r *run.Run, s *run.Step, d run.InputData) error {
 	// Update the step state and save the output to the step.
 	// We want to do this even if the state hasn't changed because
 	// the step might put useful information into that output that
 	// can be used on future iterations.
+	s.Input = d
 	s.State = result.State
 	s.Output = result
 

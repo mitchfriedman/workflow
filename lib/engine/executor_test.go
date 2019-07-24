@@ -61,6 +61,7 @@ func TestExecutor(t *testing.T) {
 		var r run.Run
 		assert.Nil(t, db.Master.Where("uuid = ?", runId).First(&r).Error)
 		assert.NotNil(t, &r)
+		assert.Nil(t, r.UnmarshalRunData())
 		return &r
 	}
 
@@ -77,4 +78,24 @@ func TestExecutor(t *testing.T) {
 	// if we try to execute again, we shouldn't find any runs since this one is completed.
 	err := executor.Execute(context.Background())
 	assert.Equal(t, engine.ErrNoRuns, err)
+
+	// ensure that all steps have input
+	r = getRun(r.UUID)
+	ensureStepsContainInput(t, r.Steps)
+}
+
+func ensureStepsContainInput(t *testing.T, s *run.Step) {
+	t.Helper()
+
+	// if it hasn't been run or it's the leaf node.
+	if s == nil || s.State == run.StateQueued {
+		return
+	}
+
+	assert.NotNil(t, s.Input)
+	assert.NotEmpty(t, s.Input)
+	assert.Contains(t, s.Input, "step_uuid")
+	assert.Contains(t, s.Input, "run_uuid")
+	ensureStepsContainInput(t, s.OnSuccess)
+	ensureStepsContainInput(t, s.OnFailure)
 }
