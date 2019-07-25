@@ -119,6 +119,12 @@ func (r *Storage) ClaimedRuns(ctx context.Context) ([]*Run, error) {
 		return nil, errors.Wrap(err, "failed to query runs")
 	}
 
+	for _, r := range runs {
+		if err := r.UnmarshalRunData(); err != nil {
+			return nil, errors.Wrap(err, "failed to unmarshal run data")
+		}
+	}
+
 	return runs, nil
 }
 

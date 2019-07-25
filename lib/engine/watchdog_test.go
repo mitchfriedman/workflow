@@ -86,6 +86,10 @@ func TestWatchdog(t *testing.T) {
 			assert.Nil(t, db.Master.Find(&allRuns).Error)
 			assert.Nil(t, db.Master.Find(&allWorkers).Error)
 
+			for _, r := range allRuns {
+				assert.Nil(t, r.UnmarshalRunData())
+			}
+
 			verifyRuns(t, allRuns, tc.runsAfterClaimed, tc.runsAfterUnclaimed)
 			verifyWorkers(t, allWorkers, tc.workersAfter)
 		})
@@ -128,6 +132,7 @@ func verifyRuns(t *testing.T, actual []*run.Run, runsClaimed []*run.Run, runsUnc
 		// verify it's claimed still.
 		assert.NotNil(t, actual.ClaimedUntil)
 		assert.NotNil(t, actual.ClaimedBy)
+		assert.NotNil(t, actual.Steps)
 	}
 
 	for _, r := range runsUnclaimed {
@@ -140,5 +145,6 @@ func verifyRuns(t *testing.T, actual []*run.Run, runsClaimed []*run.Run, runsUnc
 		// verify it's not claimed anymore.
 		assert.Nil(t, actual.ClaimedUntil)
 		assert.Nil(t, actual.ClaimedBy)
+		assert.NotNil(t, actual.Steps)
 	}
 }
