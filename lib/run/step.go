@@ -44,7 +44,7 @@ func InputSatisfied(data InputData, requiredInput []Input) error {
 type Result struct {
 	State State     `json:"state"`
 	Data  InputData `json:"data"`
-	Error error     `json:"error"`
+	Error string    `json:"error"`
 }
 
 func generateGraphFromStepTemplate(s *Step) *Step {
