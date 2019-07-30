@@ -4,11 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/mitchfriedman/workflow/lib/logging"
 
 	database2 "github.com/mitchfriedman/workflow/lib/db"
 	"github.com/mitchfriedman/workflow/lib/engine"
@@ -66,7 +67,7 @@ func setupEngine(t *testing.T, ss *run.StepperStore, db *database2.DB, hbs chan 
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 
-	logger := log.New(os.Stderr, "test", log.Ltime|log.LUTC)
+	logger := logging.New("test", os.Stderr)
 
 	return engine.NewEngine(w, ss, rr, wr, hbs, logger,
 		engine.WithPollAfter(10*time.Nanosecond),

@@ -2,8 +2,9 @@ package engine
 
 import (
 	"context"
-	"log"
 	"time"
+
+	"github.com/mitchfriedman/workflow/lib/logging"
 
 	"github.com/mitchfriedman/workflow/lib/run"
 	"github.com/mitchfriedman/workflow/lib/worker"
@@ -13,7 +14,7 @@ import (
 
 var watchDuration = 10 * time.Second
 
-func Watch(ctx context.Context, logger *log.Logger, wr worker.Repo, rr run.Repo) {
+func Watch(ctx context.Context, logger logging.StructuredLogger, wr worker.Repo, rr run.Repo) {
 	for {
 		select {
 		case <-ctx.Done():
@@ -24,7 +25,7 @@ func Watch(ctx context.Context, logger *log.Logger, wr worker.Repo, rr run.Repo)
 	}
 }
 
-func Process(ctx context.Context, logger *log.Logger, wr worker.Repo, rr run.Repo) {
+func Process(ctx context.Context, logger logging.StructuredLogger, wr worker.Repo, rr run.Repo) {
 	ctx, cancel := context.WithTimeout(context.Background(), watchDuration)
 	defer cancel()
 

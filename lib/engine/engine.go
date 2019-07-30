@@ -2,9 +2,10 @@ package engine
 
 import (
 	"context"
-	"log"
 	"sync"
 	"time"
+
+	"github.com/mitchfriedman/workflow/lib/logging"
 
 	"github.com/mitchfriedman/workflow/lib/run"
 	"github.com/mitchfriedman/workflow/lib/worker"
@@ -34,7 +35,7 @@ type Engine struct {
 	ss         *run.StepperStore
 	rr         run.Repo
 	wr         worker.Repo
-	logger     *log.Logger
+	logger     logging.StructuredLogger
 	heartbeats chan worker.Heartbeat
 
 	leaseDuration      time.Duration
@@ -62,7 +63,7 @@ func WithPollAfter(d time.Duration) Option {
 	}
 }
 
-func NewEngine(w *worker.Worker, ss *run.StepperStore, rr run.Repo, wr worker.Repo, heartbeats chan worker.Heartbeat, logger *log.Logger, options ...Option) *Engine {
+func NewEngine(w *worker.Worker, ss *run.StepperStore, rr run.Repo, wr worker.Repo, heartbeats chan worker.Heartbeat, logger logging.StructuredLogger, options ...Option) *Engine {
 	e := &Engine{w: w, ss: ss, rr: rr, wr: wr, heartbeats: heartbeats, logger: logger}
 	e.leaseDuration = defaultLeaseDuration
 	e.leaseRenewDuration = defaultLeaseRenewDuration
@@ -103,7 +104,7 @@ func (e *Engine) Start(ctx context.Context) error {
 		termMu.Unlock()
 		err := e.process()
 		if err != nil {
-			e.logger.Printf("failed to process steps: %v", err)
+			e.logger.Errorf("failed to process steps: %v", err)
 		}
 		time.Sleep(e.pollAfter)
 	}

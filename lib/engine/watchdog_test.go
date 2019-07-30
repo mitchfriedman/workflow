@@ -2,10 +2,11 @@ package engine_test
 
 import (
 	"context"
-	"log"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/mitchfriedman/workflow/lib/logging"
 
 	"github.com/stretchr/testify/assert"
 
@@ -79,7 +80,7 @@ func TestWatchdog(t *testing.T) {
 				assert.Nil(t, db.Master.Create(&d).Error)
 			}
 
-			engine.Process(context.Background(), log.New(os.Stderr, "", log.LstdFlags), wr, rr)
+			engine.Process(context.Background(), logging.New("test", os.Stderr), wr, rr)
 			var allRuns []*run.Run
 			var allWorkers []*worker.Worker
 

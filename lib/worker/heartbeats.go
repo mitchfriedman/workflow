@@ -2,8 +2,9 @@ package worker
 
 import (
 	"context"
-	"log"
 	"time"
+
+	"github.com/mitchfriedman/workflow/lib/logging"
 )
 
 type Heartbeat struct {
@@ -14,13 +15,14 @@ type Heartbeat struct {
 type HeartbeatProcessor struct {
 	hb     chan Heartbeat
 	l      Leaser
-	logger log.Logger
+	logger logging.StructuredLogger
 }
 
-func NewHeartbeatProcessor(hb chan Heartbeat, l Leaser) *HeartbeatProcessor {
+func NewHeartbeatProcessor(hb chan Heartbeat, l Leaser, logger logging.StructuredLogger) *HeartbeatProcessor {
 	return &HeartbeatProcessor{
-		hb: hb,
-		l:  l,
+		hb:     hb,
+		l:      l,
+		logger: logger,
 	}
 }
 
@@ -35,7 +37,7 @@ func (h *HeartbeatProcessor) Start(ctx context.Context) {
 			}
 			err := h.l.RenewLease(ctx, &hb.Worker, hb.LeaseDuration)
 			if err != nil {
-				h.logger.Printf("heartbeat: failed to renew lease: %v", err)
+				h.logger.Errorf("heartbeat: failed to renew lease: %v", err)
 			}
 		}
 	}

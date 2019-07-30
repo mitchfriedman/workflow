@@ -3,9 +3,12 @@ package worker_test
 import (
 	"context"
 	"fmt"
+	"os"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/mitchfriedman/workflow/lib/logging"
 
 	"github.com/mitchfriedman/workflow/lib/worker"
 )
@@ -32,7 +35,7 @@ func (f *fakeLeaser) count() int {
 func TestHeartbeatProcessor(t *testing.T) {
 	leaser := &fakeLeaser{}
 	hbs := make(chan worker.Heartbeat, 1)
-	hbp := worker.NewHeartbeatProcessor(hbs, leaser)
+	hbp := worker.NewHeartbeatProcessor(hbs, leaser, logging.New("test", os.Stderr))
 
 	var wg sync.WaitGroup
 	wg.Add(1)
