@@ -3,6 +3,7 @@ package engine_test
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"os"
 	"sync"
@@ -23,10 +24,7 @@ func setupRun(t *testing.T, rr run.Repo) string {
 	t.Helper()
 
 	r := testhelpers.CreateSampleRun("job", "s1", make(run.InputData))
-	err := rr.Create(r)
-	if err != nil {
-		t.Error(err, "error inserting run")
-	}
+	assert.Nil(t, rr.Create(r))
 	return r.UUID
 }
 
@@ -57,20 +55,16 @@ func testHeartbeatsIncoming(t *testing.T, ctx context.Context, hbs chan worker.H
 	}(ctx)
 }
 
-func setupEngine(t *testing.T, ss *run.StepperStore, db *database2.DB) (*engine.Engine, *run.Storage, *worker.Worker, string, context.Context, context.CancelFunc) {
+func setupEngine(t *testing.T, ss *run.StepperStore, db *database2.DB, hbs chan worker.Heartbeat, hbDuration time.Duration) (*engine.Engine, *run.Storage, *worker.Worker, string, context.Context, context.CancelFunc) {
 	t.Helper()
 
 	w := worker.NewWorker()
-	hbs := make(chan worker.Heartbeat, 1)
 
 	rr := run.NewDatabaseStorage(db)
 	wr := worker.NewDatabaseStorage(db)
 	runId := setupRun(t, rr)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-
-	hbDuration := 1 * time.Nanosecond
-	testHeartbeatsIncoming(t, ctx, hbs, hbDuration)
 
 	logger := log.New(os.Stderr, "test", log.Ltime|log.LUTC)
 
@@ -103,7 +97,7 @@ func TestEngine(t *testing.T) {
 	for name, tc := range tests {
 		tc := tc
 		t.Run(name, func(t *testing.T) {
-			db, closer := testhelpers.DBConnection(t, false)
+			db, closer := testhelpers.DBConnection(t, true)
 			defer closer()
 
 			getRun := func(runId string) *run.Run {
@@ -113,7 +107,9 @@ func TestEngine(t *testing.T) {
 				return &r
 			}
 
-			e, _, _, runId, ctx, cancel := setupEngine(t, tc.ss, db)
+			hbs := make(chan worker.Heartbeat, 1)
+			hbDuration := 1 * time.Nanosecond
+			e, _, _, runId, ctx, cancel := setupEngine(t, tc.ss, db, hbs, hbDuration)
 
 			var wg sync.WaitGroup
 			wg.Add(1)
@@ -135,11 +131,16 @@ func TestEngine(t *testing.T) {
 			}()
 
 			assert.Nil(t, e.Start(ctx))
+			testHeartbeatsIncoming(t, ctx, hbs, hbDuration)
 			wg.Wait()
 
 			r := getRun(runId)
 			var rd run.Data
-			assert.Nil(t, json.Unmarshal([]byte(r.Data), &rd))
+			err := json.Unmarshal([]byte(r.Data), &rd)
+			if err != nil {
+				fmt.Printf("got: %s\n", string(r.Data))
+			}
+			assert.Nil(t, err)
 			r.Input = rd.Input
 			r.Steps = rd.Steps
 

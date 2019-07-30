@@ -105,6 +105,7 @@ func (e *Engine) Start(ctx context.Context) error {
 		if err != nil {
 			e.logger.Printf("failed to process steps: %v", err)
 		}
+		time.Sleep(e.pollAfter)
 	}
 
 	return nil
@@ -117,7 +118,6 @@ func (e *Engine) process() error {
 
 	switch err {
 	case ErrNoRuns:
-		time.Sleep(e.pollAfter)
 		return nil
 	default:
 		return err
