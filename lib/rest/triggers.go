@@ -1,15 +1,12 @@
 package rest
 
 import (
-	"github.com/mitchfriedman/workflow/lib/run"
 	"net/http"
+
+	"github.com/mitchfriedman/workflow/lib/run"
 )
 
-type parser interface {
-	Parse(*http.Request) (run.Trigger, error)
-}
-
-func BuildTriggersHandler(s *run.JobStore, rr run.Repo, p parser) http.HandlerFunc {
+func BuildTriggersHandler(s *run.JobStore, rr run.Repo, p Parser) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		defer req.Body.Close()
 
