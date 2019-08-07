@@ -2,8 +2,11 @@ package rest
 
 import (
 	"context"
-	"github.com/mitchfriedman/workflow/lib/run"
 	"net/http"
+
+	"github.com/gorilla/mux"
+
+	"github.com/mitchfriedman/workflow/lib/run"
 )
 
 // RunRepresentation is a JSON API response of a run
@@ -23,7 +26,25 @@ func createRepresentation(runs []*run.Run) []RunRepresentation {
 	return reps
 }
 
-// BuildGetRunsHandler builds HandlerFunc to fetch runs from the database.
+// BuildGetRunHandler builds a HandlerFunc to get a run by the runs UUID.
+func BuildGetRunHandler(rr run.Repo) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		params := mux.Vars(r)
+		uuid := params["uuid"]
+		result, err := rr.GetRun(context.Background(), uuid)
+		if err != nil {
+			switch err {
+			case run.ErrNotFound:
+				respondErr(w, Error(http.StatusNotFound, err.Error()))
+			default:
+				respondErr(w, Error(http.StatusInternalServerError, err.Error()))
+			}
+		}
+		respond(w, http.StatusOK, result)
+	}
+}
+
+// BuildGetRunsHandler builds a HandlerFunc to fetch runs from the database.
 func BuildGetRunsHandler(rr run.Repo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		jobParam, ok := r.URL.Query()["job_name"]

@@ -4,9 +4,13 @@ import (
 	"context"
 	"time"
 
+	"github.com/jinzhu/gorm"
+
 	database "github.com/mitchfriedman/workflow/lib/db"
 	"github.com/pkg/errors"
 )
+
+var ErrNotFound = errors.New("record not found")
 
 type Repo interface {
 	Creator
@@ -18,6 +22,7 @@ type Retriever interface {
 	NextRuns() ([]*Run, error)
 	ClaimedRuns(context.Context) ([]*Run, error)
 	ListByJob(context.Context, string) ([]*Run, error)
+	GetRun(context.Context, string) (*Run, error)
 }
 
 type Claimer interface {
@@ -31,6 +36,25 @@ type Creator interface {
 
 type Storage struct {
 	db *database.DB
+}
+
+func (r *Storage) GetRun(ctx context.Context, uuid string) (*Run, error) {
+	return r.getRunByUUID(ctx, uuid)
+}
+
+func (r *Storage) getRunByUUID(ctx context.Context, uuid string) (*Run, error) {
+	var run Run
+	err := r.db.Reader.
+		Model(&run).
+		Where("uuid = ?", uuid).
+		First(&run).Error
+
+	switch err {
+	case gorm.ErrRecordNotFound:
+		return nil, ErrNotFound
+	default:
+		return &run, err
+	}
 }
 
 func NewDatabaseStorage(db *database.DB) *Storage {

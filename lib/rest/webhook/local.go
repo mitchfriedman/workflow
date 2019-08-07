@@ -16,19 +16,18 @@ type localWebhook struct {
 	Input   map[string]interface{} `json:"input_data"`
 }
 
-func (*LocalParser) Parse(r *http.Request) (run.Trigger, error) {
+func (*LocalParser) Parse(r *http.Request) (*run.Trigger, error) {
 	payload := localWebhook{}
-	dec := json.NewDecoder(r.Body)
-	err := dec.Decode(&payload)
+	err := json.NewDecoder(r.Body).Decode(&payload)
 	if err != nil {
-		return run.Trigger{}, errors.Wrapf(err, "failed to Parse request body")
+		return nil, errors.Wrapf(err, "failed to Parse request body")
 	}
 
 	if payload.Input == nil {
 		payload.Input = make(map[string]interface{})
 	}
 
-	return run.Trigger{
+	return &run.Trigger{
 		JobName: payload.JobName,
 		Scope:   payload.Scope,
 		Input:   payload.Input,

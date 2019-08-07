@@ -2,17 +2,63 @@ package rest_test
 
 import (
 	"encoding/json"
-	"github.com/mitchfriedman/workflow/lib/rest"
-	"github.com/mitchfriedman/workflow/lib/run"
-	testhelpers "github.com/mitchfriedman/workflow/lib/testhelpers"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/mitchfriedman/workflow/lib/rest"
+	"github.com/mitchfriedman/workflow/lib/run"
+	testhelpers "github.com/mitchfriedman/workflow/lib/testhelpers"
+
 	"github.com/stretchr/testify/assert"
 )
+
+func TestGetRun(t *testing.T) {
+	db, closer := testhelpers.DBConnection(t, false)
+	defer closer()
+
+	r1 := testhelpers.CreateSampleRun("job1", "s1", make(run.InputData))
+	rr := run.NewDatabaseStorage(db)
+	rr.Create(r1)
+
+	tests := map[string]struct {
+		uuid       string
+		wantRun    *run.Run
+		wantStatus int
+	}{
+		"with run present":  {r1.UUID, r1, 200},
+		"with no run found": {"other", nil, 404},
+	}
+
+	router := rest.NewRouter("test", run.NewJobsStore(), rr, nil)
+
+	for name, tc := range tests {
+		tc := tc
+		t.Run(name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, "/Runs/"+tc.uuid, nil)
+			resp := httptest.NewRecorder()
+
+			router.ServeHTTP(resp, req)
+			assert.Equal(t, tc.wantStatus, resp.Code)
+			if tc.wantRun != nil {
+				var result *run.Run
+				resultFrom(t, &result, resp.Body)
+				assert.Equal(t, tc.wantRun.UUID, result.UUID)
+			}
+		})
+	}
+}
+
+func resultFrom(t *testing.T, result interface{}, r io.Reader) {
+	t.Helper()
+
+	body, err := ioutil.ReadAll(r)
+	assert.Nil(t, err)
+	err = json.Unmarshal(body, &result)
+	assert.Nil(t, err)
+}
 
 func TestGetRuns(t *testing.T) {
 	db, closer := testhelpers.DBConnection(t, false)
@@ -37,14 +83,7 @@ func TestGetRuns(t *testing.T) {
 		"with jobs query not present": {"", []*run.Run{}, 400},
 		"with jobs none found":        {"mr shneebly", []*run.Run{}, 200},
 	}
-	handler := rest.BuildGetRunsHandler(rr)
-
-	resultFrom := func(result interface{}, r io.Reader) {
-		body, err := ioutil.ReadAll(r)
-		assert.Nil(t, err)
-		err = json.Unmarshal(body, &result)
-		assert.Nil(t, err)
-	}
+	router := rest.NewRouter("test", run.NewJobsStore(), rr, nil)
 
 	for name, tc := range tests {
 		tc := tc
@@ -57,12 +96,12 @@ func TestGetRuns(t *testing.T) {
 				req.URL.RawQuery = q.Encode()
 			}
 
-			handler.ServeHTTP(resp, req)
+			router.ServeHTTP(resp, req)
 			assert.Equal(t, tc.expectedStatus, resp.Code)
 			result := struct {
 				Runs []rest.RunRepresentation `json:"runs"`
 			}{}
-			resultFrom(&result, resp.Body)
+			resultFrom(t, &result, resp.Body)
 			assert.Equal(t, len(tc.expectedRuns), len(result.Runs))
 		})
 	}
