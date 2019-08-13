@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/mitchfriedman/workflow/lib/run"
@@ -46,7 +47,7 @@ func BuildTriggersHandler(s *run.JobStore, rr run.Repo, p []Parser) http.Handler
 		}
 
 		r := run.NewRun(j, *trig)
-		if err = rr.Create(r); err != nil {
+		if err = rr.CreateRun(context.TODO(), r); err != nil {
 			respondErr(w, err)
 			return
 		}

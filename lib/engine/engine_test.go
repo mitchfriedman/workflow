@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/mitchfriedman/workflow/lib/metrics"
+
 	"github.com/mitchfriedman/workflow/lib/logging"
 
 	database2 "github.com/mitchfriedman/workflow/lib/db"
@@ -25,7 +27,7 @@ func setupRun(t *testing.T, rr run.Repo) string {
 	t.Helper()
 
 	r := testhelpers.CreateSampleRun("job", "s1", make(run.InputData))
-	assert.Nil(t, rr.Create(r))
+	assert.Nil(t, rr.CreateRun(context.Background(), r))
 	return r.UUID
 }
 
@@ -68,8 +70,9 @@ func setupEngine(t *testing.T, ss *run.StepperStore, db *database2.DB, hbs chan 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 
 	logger := logging.New("test", os.Stderr)
+	stats, _ := metrics.LoadStatsd("localhost", "9999", "", []string{}, logger)
 
-	return engine.NewEngine(w, ss, rr, wr, hbs, logger,
+	return engine.NewEngine(w, ss, rr, wr, hbs, logger, stats,
 		engine.WithPollAfter(10*time.Nanosecond),
 		engine.WithLeaseRenewDuration(hbDuration),
 		engine.WithLeaseDuration(1*time.Millisecond)), rr, w, runId, ctx, cancel

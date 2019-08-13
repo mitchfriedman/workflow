@@ -71,7 +71,7 @@ func cleanupRuns(ctx context.Context, rr run.Repo, wr worker.Repo) error {
 		}
 
 		// fetch this worker and see if it is still around.
-		w, err := wr.Get(context.Background(), *r.ClaimedBy)
+		w, err := wr.Get(ctx, *r.ClaimedBy)
 		if err != nil {
 			return errors.Wrapf(err, "cleanupRuns: failed to get run: %v", r)
 		}
@@ -82,7 +82,7 @@ func cleanupRuns(ctx context.Context, rr run.Repo, wr worker.Repo) error {
 		}
 
 		// the worker is no longer with us, let's release this run and let another claim it.
-		if err := rr.Release(r); err != nil {
+		if err := rr.ReleaseRun(ctx, r); err != nil {
 			return errors.Wrapf(err, "cleanupRuns: failed to release run: %v", r)
 		}
 	}

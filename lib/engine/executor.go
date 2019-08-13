@@ -27,7 +27,7 @@ func NewExecutor(workerID string, runRepo run.Repo, ss *run.StepperStore) *Execu
 }
 
 func (p *Executor) Execute(ctx context.Context) error {
-	r, err := p.nextRun()
+	r, err := p.nextRun(ctx)
 	if err != nil {
 		return err
 	}
@@ -36,7 +36,7 @@ func (p *Executor) Execute(ctx context.Context) error {
 		return ErrNoRuns
 	}
 
-	err = p.claimRun(r)
+	err = p.runRepo.ClaimRun(ctx, r, p.workerID, claimDuration)
 	if err != nil {
 		return err
 	}
@@ -69,7 +69,7 @@ func (p *Executor) Execute(ctx context.Context) error {
 
 func (p *Executor) abortRun(r *run.Run) error {
 	r.State = run.StateError
-	return p.runRepo.Release(r)
+	return p.runRepo.ReleaseRun(context.TODO(), r)
 }
 
 func (p *Executor) updateAndReleaseRun(result run.Result, r *run.Run, s *run.Step, d run.InputData) error {
@@ -83,7 +83,7 @@ func (p *Executor) updateAndReleaseRun(result run.Result, r *run.Run, s *run.Ste
 
 	r.State, r.Rollback = CalculateRunStateTransition(result.State, r.Rollback, s.OnSuccess, s.OnFailure)
 
-	return p.runRepo.Release(r)
+	return p.runRepo.ReleaseRun(context.TODO(), r)
 }
 
 func CalculateRunStateTransition(resultState run.State, isRollback bool, onSuccess, onFailure *run.Step) (run.State, bool) {
@@ -131,10 +131,6 @@ func (p *Executor) getStepper(s *run.Step) (run.Stepper, error) {
 	return p.stepperStore.Get(s.StepType)
 }
 
-func (p *Executor) claimRun(r *run.Run) error {
-	return p.runRepo.Claim(r, p.workerID, claimDuration)
-}
-
-func (p *Executor) nextRun() (*run.Run, error) {
-	return Prioritize(p.runRepo)
+func (p *Executor) nextRun(ctx context.Context) (*run.Run, error) {
+	return Prioritize(ctx, p.runRepo)
 }

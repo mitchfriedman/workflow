@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"context"
 	"fmt"
 	"sort"
 
@@ -11,8 +12,8 @@ import (
 
 // Prioritize receives a run Retriever and will determine the best run to execute based on currently executing runs,
 // in progress runs, and not-yet-started runs.
-func Prioritize(retriever run.Retriever) (*run.Run, error) {
-	runs, err := retriever.NextRuns()
+func Prioritize(ctx context.Context, retriever run.Retriever) (*run.Run, error) {
+	runs, err := retriever.NextRuns(ctx)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch next runs")
 	}

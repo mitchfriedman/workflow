@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/mitchfriedman/workflow/lib/logging"
+	"github.com/mitchfriedman/workflow/lib/tracing"
+
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"github.com/pkg/errors"
@@ -38,7 +41,7 @@ func configureDBArgs(url string, timeoutMS int) string {
 	return url
 }
 
-func Connect(masterURL, readerURL string, logQueries bool) (*DB, error) {
+func Connect(masterURL, readerURL string, logQueries bool, logger logging.StructuredLogger) (*DB, error) {
 	mURL := configureDBArgs(masterURL, 30000)
 	writer, err := gorm.Open("postgres", mURL)
 	if err != nil {
@@ -50,6 +53,9 @@ func Connect(masterURL, readerURL string, logQueries bool) (*DB, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to connect to reader Postgres")
 	}
+
+	tracing.AddGormCallbacks(writer, logger)
+	tracing.AddGormCallbacks(reader, logger)
 
 	writer.LogMode(logQueries)
 	reader.LogMode(logQueries)

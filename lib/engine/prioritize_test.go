@@ -1,6 +1,7 @@
 package engine_test
 
 import (
+	"context"
 	"fmt"
 	"testing"
 	"time"
@@ -44,10 +45,10 @@ func TestPrioritize(t *testing.T) {
 			rr := run.NewDatabaseStorage(db)
 
 			for _, r := range tc.runs {
-				assert.Nil(t, rr.Create(r))
+				assert.Nil(t, rr.CreateRun(context.Background(), r))
 			}
 
-			p, err := engine.Prioritize(rr)
+			p, err := engine.Prioritize(context.Background(), rr)
 			assert.Nil(t, err)
 			if tc.expectedRun == nil {
 				assert.Nil(t, p)

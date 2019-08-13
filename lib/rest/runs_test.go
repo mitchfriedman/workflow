@@ -1,6 +1,7 @@
 package rest_test
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"io/ioutil"
@@ -21,7 +22,7 @@ func TestGetRun(t *testing.T) {
 
 	r1 := testhelpers.CreateSampleRun("job1", "s1", make(run.InputData))
 	rr := run.NewDatabaseStorage(db)
-	rr.Create(r1)
+	rr.CreateRun(context.Background(), r1)
 
 	tests := map[string]struct {
 		uuid       string
@@ -69,10 +70,10 @@ func TestGetRuns(t *testing.T) {
 	js1s12 := testhelpers.CreateSampleRun("job1", "s1", make(run.InputData))
 
 	rr := run.NewDatabaseStorage(db)
-	rr.Create(j1s1)
-	rr.Create(j1s2)
-	rr.Create(j2s1)
-	rr.Create(js1s12)
+	rr.CreateRun(context.Background(), j1s1)
+	rr.CreateRun(context.Background(), j1s2)
+	rr.CreateRun(context.Background(), j2s1)
+	rr.CreateRun(context.Background(), js1s12)
 
 	tests := map[string]struct {
 		job            string

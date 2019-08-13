@@ -3,8 +3,8 @@ package testhelpers_test
 import (
 	"fmt"
 
-	"github.com/mitchfriedman/workflow/lib/run"
 	"github.com/google/uuid"
+	"github.com/mitchfriedman/workflow/lib/run"
 )
 
 func CreateSampleRunFirst2StepsSuccess(jobName, scope string, input run.InputData) *run.Run {
@@ -34,7 +34,7 @@ func CreateSampleRunFirstStepFailure(jobName, scope string, input run.InputData)
 func CreateSampleRun(jobName, scope string, input run.InputData) *run.Run {
 	/*
 
-			Create a graph that has a few paths. It looks like:
+			CreateRun a graph that has a few paths. It looks like:
 
 				       goodbye
 			          / (success)

@@ -5,6 +5,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/mitchfriedman/workflow/lib/logging"
+
 	database "github.com/mitchfriedman/workflow/lib/db"
 	"github.com/mitchfriedman/workflow/lib/run"
 	"github.com/mitchfriedman/workflow/lib/worker"
@@ -18,7 +20,7 @@ func DBConnection(t *testing.T, logMode ...bool) (*database.DB, func()) {
 	if dbURL == "" {
 		dbURL = "postgres://localhost:5432/workflow?sslmode=disable"
 	}
-	db, err := database.Connect(dbURL, dbURL, false)
+	db, err := database.Connect(dbURL, dbURL, false, logging.New("test", os.Stderr))
 	if err != nil {
 		panic(fmt.Errorf("Could not connect to DB: %v\n", err))
 	}

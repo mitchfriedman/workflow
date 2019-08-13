@@ -4,7 +4,10 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 	"time"
+
+	"github.com/mitchfriedman/workflow/lib/logging"
 
 	database "github.com/mitchfriedman/workflow/lib/db"
 	"github.com/mitchfriedman/workflow/lib/run"
@@ -13,7 +16,7 @@ import (
 
 func main() {
 	dbURL := "postgres://localhost:5432/workflow?sslmode=disable"
-	db, _ := database.Connect(dbURL, dbURL, false)
+	db, _ := database.Connect(dbURL, dbURL, false, logging.New("app", os.Stderr))
 	fmt.Println("got db: ", db)
 
 	jobStore := run.NewJobsStore()

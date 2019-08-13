@@ -2,8 +2,11 @@ package engine
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"time"
+
+	"github.com/DataDog/datadog-go/statsd"
 
 	"github.com/mitchfriedman/workflow/lib/logging"
 
@@ -36,6 +39,7 @@ type Engine struct {
 	rr         run.Repo
 	wr         worker.Repo
 	logger     logging.StructuredLogger
+	metrics    *statsd.Client
 	heartbeats chan worker.Heartbeat
 
 	leaseDuration      time.Duration
@@ -63,11 +67,13 @@ func WithPollAfter(d time.Duration) Option {
 	}
 }
 
-func NewEngine(w *worker.Worker, ss *run.StepperStore, rr run.Repo, wr worker.Repo, heartbeats chan worker.Heartbeat, logger logging.StructuredLogger, options ...Option) *Engine {
+func NewEngine(w *worker.Worker, ss *run.StepperStore, rr run.Repo, wr worker.Repo, heartbeats chan worker.Heartbeat, logger logging.StructuredLogger, metrics *statsd.Client, options ...Option) *Engine {
 	e := &Engine{w: w, ss: ss, rr: rr, wr: wr, heartbeats: heartbeats, logger: logger}
 	e.leaseDuration = defaultLeaseDuration
 	e.leaseRenewDuration = defaultLeaseRenewDuration
 	e.pollAfter = defaultPollAfter
+	e.logger = logger
+	e.metrics = metrics
 
 	for _, opt := range options {
 		opt(e)
@@ -112,10 +118,25 @@ func (e *Engine) Start(ctx context.Context) error {
 	return nil
 }
 
+func executionStatus(err error) string {
+	switch {
+	case err == ErrNoRuns:
+		return "no_runs"
+	case err != nil:
+		return "failed"
+	default:
+		return "success"
+	}
+}
+
 func (e *Engine) process() error {
 	// TODO: set context timeout.
 	ex := NewExecutor(e.w.UUID, e.rr, e.ss)
 	err := ex.Execute(context.Background())
+
+	e.metrics.Count("workflow.engine.execute", 1, []string{
+		fmt.Sprintf("status:%s", executionStatus(err)),
+	}, 1.0)
 
 	switch err {
 	case ErrNoRuns:

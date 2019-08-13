@@ -53,7 +53,7 @@ func TestExecutor(t *testing.T) {
 
 	r := testhelpers.CreateSampleRun("job", "s1", make(run.InputData))
 	r.Steps.OnSuccess.OnSuccess.OnSuccess = nil
-	assert.Nil(t, repo.Create(r))
+	assert.Nil(t, repo.CreateRun(context.Background(), r))
 
 	executor := engine.NewExecutor("123", repo, ss)
 

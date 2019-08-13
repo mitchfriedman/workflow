@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/mitchfriedman/workflow/lib/tracing"
+
 	"github.com/jinzhu/gorm"
 
 	database "github.com/mitchfriedman/workflow/lib/db"
@@ -19,23 +21,27 @@ type Repo interface {
 }
 
 type Retriever interface {
-	NextRuns() ([]*Run, error)
+	NextRuns(context.Context) ([]*Run, error)
 	ClaimedRuns(context.Context) ([]*Run, error)
 	ListByJob(context.Context, string) ([]*Run, error)
 	GetRun(context.Context, string) (*Run, error)
 }
 
 type Claimer interface {
-	Claim(*Run, string, time.Duration) error
-	Release(*Run) error
+	ClaimRun(context.Context, *Run, string, time.Duration) error
+	ReleaseRun(context.Context, *Run) error
 }
 
 type Creator interface {
-	Create(*Run) error
+	CreateRun(context.Context, *Run) error
 }
 
 type Storage struct {
 	db *database.DB
+}
+
+func NewDatabaseStorage(db *database.DB) *Storage {
+	return &Storage{db: db}
 }
 
 func (r *Storage) GetRun(ctx context.Context, uuid string) (*Run, error) {
@@ -44,10 +50,14 @@ func (r *Storage) GetRun(ctx context.Context, uuid string) (*Run, error) {
 
 func (r *Storage) getRunByUUID(ctx context.Context, uuid string) (*Run, error) {
 	var run Run
+	span, ctx := tracing.NewDBSpan(ctx, r.db.Reader, "getRunByUUID")
 	err := r.db.Reader.
 		Model(&run).
 		Where("uuid = ?", uuid).
 		First(&run).Error
+
+	span.RecordError(err)
+	span.Finish()
 
 	switch err {
 	case gorm.ErrRecordNotFound:
@@ -57,25 +67,29 @@ func (r *Storage) getRunByUUID(ctx context.Context, uuid string) (*Run, error) {
 	}
 }
 
-func NewDatabaseStorage(db *database.DB) *Storage {
-	return &Storage{db: db}
-}
-
-func (r *Storage) Create(d *Run) error {
+func (r *Storage) CreateRun(ctx context.Context, d *Run) error {
 	err := d.MarshalRunData()
 	if err != nil {
 		return err
 	}
 	d.Started = time.Now().UTC()
 
-	return r.db.Master.Create(&d).Error
+	span, ctx := tracing.NewDBSpan(ctx, r.db.Master, "create_run")
+	err = r.db.Master.Create(&d).Error
+	span.RecordError(err)
+	span.Finish()
+
+	return err
 }
 
-func (r *Storage) NextRuns() ([]*Run, error) {
+func (r *Storage) NextRuns(ctx context.Context) ([]*Run, error) {
 	var runs []*Run
+	span, ctx := tracing.NewDBSpan(ctx, r.db.Reader, "next_runs")
 	err := r.db.Reader.
 		Where("state = ?", StateQueued).
 		Find(&runs).Error
+	span.RecordError(err)
+	span.Finish()
 
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to query for next run")
@@ -91,7 +105,7 @@ func (r *Storage) NextRuns() ([]*Run, error) {
 	return runs, nil
 }
 
-func (r *Storage) Claim(t *Run, workerID string, d time.Duration) error {
+func (r *Storage) ClaimRun(ctx context.Context, t *Run, workerID string, d time.Duration) error {
 	err := t.MarshalRunData()
 	if err != nil {
 		return err
@@ -101,13 +115,18 @@ func (r *Storage) Claim(t *Run, workerID string, d time.Duration) error {
 	t.ClaimedBy = &workerID
 	t.ClaimedUntil = &n
 
-	return r.db.Master.
+	span, ctx := tracing.NewDBSpan(ctx, r.db.Master, "claim_run")
+	err = r.db.Master.
 		Model(&t).
 		Where("uuid = ?", t.UUID).
 		Updates(t).Error
+	span.RecordError(err)
+	span.Finish()
+
+	return err
 }
 
-func (r *Storage) Release(d *Run) error {
+func (r *Storage) ReleaseRun(ctx context.Context, d *Run) error {
 	err := d.MarshalRunData()
 	if err != nil {
 		return err
@@ -127,17 +146,25 @@ func (r *Storage) Release(d *Run) error {
 		"rollback":           d.Rollback,
 	}
 
-	return r.db.Master.
+	span, ctx := tracing.NewDBSpan(ctx, r.db.Master, "release_run")
+	err = r.db.Master.
 		Model(&d).
 		Where("uuid = ?", d.UUID).
 		Updates(updates).Error
+	span.RecordError(err)
+	span.Finish()
+
+	return err
 }
 
 func (r *Storage) ClaimedRuns(ctx context.Context) ([]*Run, error) {
 	var runs []*Run
+	span, ctx := tracing.NewDBSpan(ctx, r.db.Reader, "claimed_runs")
 	err := r.db.Reader.
 		Where("state = ?", StateQueued).
 		Find(&runs).Error
+	span.RecordError(err)
+	span.Finish()
 
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to query runs")
@@ -154,10 +181,13 @@ func (r *Storage) ClaimedRuns(ctx context.Context) ([]*Run, error) {
 
 func (r *Storage) ListByJob(ctx context.Context, job string) ([]*Run, error) {
 	var runs []*Run
+	span, ctx := tracing.NewDBSpan(ctx, r.db.Reader, "list_by_job")
 	err := r.db.Reader.Where("job_name = ?", job).Find(&runs).Error
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to query runs by job: %s", job)
 	}
+	span.RecordError(err)
+	span.Finish()
 
 	return runs, nil
 }
