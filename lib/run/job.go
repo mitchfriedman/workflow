@@ -23,6 +23,16 @@ func (d InputData) Merge(other InputData) InputData {
 	return n
 }
 
+// TODO: maybe add more of these for slices of specific types.
+func (d InputData) GetList(field string) []interface{} {
+	val, ok := d[field].([]interface{})
+	if ok {
+		return val
+	}
+
+	return []interface{}{}
+}
+
 func (d InputData) GetString(field string) string {
 	val := d[field]
 	switch val.(type) {
@@ -36,8 +46,9 @@ func (d InputData) GetString(field string) string {
 		return strconv.Itoa(int(val.(float64)))
 	case float32:
 		return strconv.Itoa(int(val.(float32)))
+	default:
+		return fmt.Sprintf("%s", val)
 	}
-	return fmt.Sprintf("%s", val)
 }
 
 func (d InputData) GetInt(field string) int {
@@ -59,12 +70,14 @@ func (d InputData) GetInt(field string) int {
 			return 0
 		}
 		return v
+	default:
+		return 0
 	}
-	return 0
 }
 
 const InputTypeString = "string"
 const InputTypeInt = "int"
+const InputTypeList = "list"
 
 // Job is a definition of pipeline of work to perform.
 type Job struct {

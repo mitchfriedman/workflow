@@ -7,6 +7,27 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestInputData_GetList(t *testing.T) {
+	tests := map[string]struct {
+		have interface{}
+		want interface{}
+	}{
+		"with a list of int32":     {[]int32{int32(10)}, []interface{}{}},
+		"with a list of interface": {[]interface{}{10}, []interface{}{10}},
+	}
+
+	for name, tc := range tests {
+		tc := tc
+		t.Run(name, func(t *testing.T) {
+			d := run.InputData{
+				"val": tc.have,
+			}
+
+			assert.Equal(t, tc.want, d.GetList("val"))
+		})
+	}
+}
+
 func TestInputData_GetString(t *testing.T) {
 	tests := map[string]struct {
 		have interface{}
