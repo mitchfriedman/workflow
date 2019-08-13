@@ -50,7 +50,7 @@ func (r *Storage) GetRun(ctx context.Context, uuid string) (*Run, error) {
 
 func (r *Storage) getRunByUUID(ctx context.Context, uuid string) (*Run, error) {
 	var run Run
-	span, ctx := tracing.NewDBSpan(ctx, r.db.Reader, "getRunByUUID")
+	span, ctx := tracing.NewDBSpan(ctx, r.db.Reader, "run.getRunByUUID")
 	err := r.db.Reader.
 		Model(&run).
 		Where("uuid = ?", uuid).
@@ -74,7 +74,7 @@ func (r *Storage) CreateRun(ctx context.Context, d *Run) error {
 	}
 	d.Started = time.Now().UTC()
 
-	span, ctx := tracing.NewDBSpan(ctx, r.db.Master, "create_run")
+	span, ctx := tracing.NewDBSpan(ctx, r.db.Master, "run.create_run")
 	err = r.db.Master.Create(&d).Error
 	span.RecordError(err)
 	span.Finish()
@@ -84,7 +84,7 @@ func (r *Storage) CreateRun(ctx context.Context, d *Run) error {
 
 func (r *Storage) NextRuns(ctx context.Context) ([]*Run, error) {
 	var runs []*Run
-	span, ctx := tracing.NewDBSpan(ctx, r.db.Reader, "next_runs")
+	span, ctx := tracing.NewDBSpan(ctx, r.db.Reader, "run.next_runs")
 	err := r.db.Reader.
 		Where("state = ?", StateQueued).
 		Find(&runs).Error
@@ -115,7 +115,7 @@ func (r *Storage) ClaimRun(ctx context.Context, t *Run, workerID string, d time.
 	t.ClaimedBy = &workerID
 	t.ClaimedUntil = &n
 
-	span, ctx := tracing.NewDBSpan(ctx, r.db.Master, "claim_run")
+	span, ctx := tracing.NewDBSpan(ctx, r.db.Master, "run.claim_run")
 	err = r.db.Master.
 		Model(&t).
 		Where("uuid = ?", t.UUID).
@@ -146,7 +146,7 @@ func (r *Storage) ReleaseRun(ctx context.Context, d *Run) error {
 		"rollback":           d.Rollback,
 	}
 
-	span, ctx := tracing.NewDBSpan(ctx, r.db.Master, "release_run")
+	span, ctx := tracing.NewDBSpan(ctx, r.db.Master, "run.release_run")
 	err = r.db.Master.
 		Model(&d).
 		Where("uuid = ?", d.UUID).
@@ -159,7 +159,7 @@ func (r *Storage) ReleaseRun(ctx context.Context, d *Run) error {
 
 func (r *Storage) ClaimedRuns(ctx context.Context) ([]*Run, error) {
 	var runs []*Run
-	span, ctx := tracing.NewDBSpan(ctx, r.db.Reader, "claimed_runs")
+	span, ctx := tracing.NewDBSpan(ctx, r.db.Reader, "run.claimed_runs")
 	err := r.db.Reader.
 		Where("state = ?", StateQueued).
 		Find(&runs).Error
@@ -181,7 +181,7 @@ func (r *Storage) ClaimedRuns(ctx context.Context) ([]*Run, error) {
 
 func (r *Storage) ListByJob(ctx context.Context, job string) ([]*Run, error) {
 	var runs []*Run
-	span, ctx := tracing.NewDBSpan(ctx, r.db.Reader, "list_by_job")
+	span, ctx := tracing.NewDBSpan(ctx, r.db.Reader, "run.list_by_job")
 	err := r.db.Reader.Where("job_name = ?", job).Find(&runs).Error
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to query runs by job: %s", job)
