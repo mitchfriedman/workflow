@@ -23,14 +23,17 @@ func (d InputData) Merge(other InputData) InputData {
 	return n
 }
 
-// TODO: maybe add more of these for slices of specific types.
-func (d InputData) GetList(field string) []interface{} {
-	val, ok := d[field].([]interface{})
-	if ok {
-		return val
+func (d InputData) GetSliceOfMaps(field string) []map[string]interface{} {
+	val, ok := d[field]
+	if !ok {
+		return []map[string]interface{}{}
+	}
+	var vals []map[string]interface{}
+	for _, d := range val.([]map[string]interface{}) {
+		vals = append(vals, d)
 	}
 
-	return []interface{}{}
+	return vals
 }
 
 func (d InputData) GetString(field string) string {

@@ -12,8 +12,7 @@ func TestInputData_GetList(t *testing.T) {
 		have interface{}
 		want interface{}
 	}{
-		"with a list of int32":     {[]int32{int32(10)}, []interface{}{}},
-		"with a list of interface": {[]interface{}{10}, []interface{}{10}},
+		"with a list of map of interfaces": {[]map[string]interface{}{{"test": 10}}, []map[string]interface{}{{"test": 10}}},
 	}
 
 	for name, tc := range tests {
@@ -23,7 +22,7 @@ func TestInputData_GetList(t *testing.T) {
 				"val": tc.have,
 			}
 
-			assert.Equal(t, tc.want, d.GetList("val"))
+			assert.Equal(t, tc.want, d.GetSliceOfMaps("val"))
 		})
 	}
 }
