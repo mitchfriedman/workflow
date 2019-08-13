@@ -23,6 +23,20 @@ func (d InputData) Merge(other InputData) InputData {
 	return n
 }
 
+func (d InputData) GetSliceOfInt64(field string) []int64 {
+	val, ok := d[field]
+	if !ok {
+		return []int64{}
+	}
+
+	var vals []int64
+	for _, d := range val.([]int64) {
+		vals = append(vals, d)
+	}
+
+	return vals
+}
+
 func (d InputData) GetSliceOfMaps(field string) []map[string]interface{} {
 	val, ok := d[field]
 	if !ok {

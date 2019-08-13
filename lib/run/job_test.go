@@ -7,7 +7,27 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestInputData_GetList(t *testing.T) {
+func TestInputData_GetSliceOfInt64(t *testing.T) {
+	tests := map[string]struct {
+		have interface{}
+		want interface{}
+	}{
+		"with a list of int64": {[]int64{10}, []int64{10}},
+	}
+
+	for name, tc := range tests {
+		tc := tc
+		t.Run(name, func(t *testing.T) {
+			d := run.InputData{
+				"val": tc.have,
+			}
+
+			assert.Equal(t, tc.want, d.GetSliceOfInt64("val"))
+		})
+	}
+}
+
+func TestInputData_GetSliceOfMaps(t *testing.T) {
 	tests := map[string]struct {
 		have interface{}
 		want interface{}
