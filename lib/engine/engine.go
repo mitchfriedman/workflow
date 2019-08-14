@@ -6,6 +6,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/mitchfriedman/workflow/lib/tracing"
+
 	"github.com/DataDog/datadog-go/statsd"
 
 	"github.com/mitchfriedman/workflow/lib/logging"
@@ -81,7 +83,12 @@ func NewEngine(w *worker.Worker, ss *run.StepperStore, rr run.Repo, wr worker.Re
 	return e
 }
 
-func (e *Engine) Start(ctx context.Context) error {
+func (e *Engine) Start(ctx context.Context) (err error) {
+	span, ctx := tracing.NewServiceSpan(ctx, "engine.start")
+	defer func() {
+		span.RecordError(err)
+		span.Finish()
+	}()
 	go e.heartbeat(ctx)
 
 	var terminate bool
@@ -108,7 +115,7 @@ func (e *Engine) Start(ctx context.Context) error {
 			break
 		}
 		termMu.Unlock()
-		err := e.process()
+		err := e.process(ctx)
 		if err != nil {
 			e.logger.Errorf("failed to process steps: %v", err)
 		}
@@ -129,10 +136,16 @@ func executionStatus(err error) string {
 	}
 }
 
-func (e *Engine) process() error {
+func (e *Engine) process(ctx context.Context) (err error) {
+	span, ctx := tracing.NewServiceSpan(ctx, "engine.process")
+	defer func() {
+		span.RecordError(err)
+		span.Finish()
+	}()
+
 	// TODO: set context timeout.
 	ex := NewExecutor(e.w.UUID, e.rr, e.ss)
-	err := ex.Execute(context.Background())
+	err = ex.Execute(ctx)
 
 	e.metrics.Count("workflow.engine.execute", 1, []string{
 		fmt.Sprintf("status:%s", executionStatus(err)),

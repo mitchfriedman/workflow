@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/mitchfriedman/workflow/lib/tracing"
+
 	"github.com/mitchfriedman/workflow/lib/run"
 	"github.com/pkg/errors"
 )
@@ -26,10 +28,16 @@ func NewExecutor(workerID string, runRepo run.Repo, ss *run.StepperStore) *Execu
 	}
 }
 
-func (p *Executor) Execute(ctx context.Context) error {
+func (p *Executor) Execute(ctx context.Context) (err error) {
+	span, ctx := tracing.NewServiceSpan(ctx, "executor.execute")
+	defer func() {
+		span.RecordError(err)
+		span.Finish()
+	}()
+
 	r, err := p.nextRun(ctx)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to fetch next run")
 	}
 
 	if r == nil {
@@ -38,17 +46,17 @@ func (p *Executor) Execute(ctx context.Context) error {
 
 	err = p.runRepo.ClaimRun(ctx, r, p.workerID, claimDuration)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to claim run")
 	}
 
 	s, input, err := r.NextStep()
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to fetch next step")
 	}
 
 	stepper, err := p.getStepper(s)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to get stepper")
 	}
 
 	if err := run.InputSatisfied(input, stepper.RequiredInput()); err != nil {
@@ -61,10 +69,10 @@ func (p *Executor) Execute(ctx context.Context) error {
 
 	result, err := stepper.Step(input)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to invoke step")
 	}
 
-	return p.updateAndReleaseRun(result, r, s, input)
+	return errors.Wrap(p.updateAndReleaseRun(result, r, s, input), "failed to update and release run")
 }
 
 func (p *Executor) abortRun(r *run.Run) error {

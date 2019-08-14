@@ -7,7 +7,10 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
+
+	"github.com/mitchfriedman/workflow/lib/logging"
 
 	"github.com/mitchfriedman/workflow/lib/rest"
 	"github.com/mitchfriedman/workflow/lib/run"
@@ -33,7 +36,7 @@ func TestGetRun(t *testing.T) {
 		"with no run found": {"other", nil, 404},
 	}
 
-	router := rest.NewRouter("test", run.NewJobsStore(), rr, nil)
+	router := rest.NewRouter("test", run.NewJobsStore(), rr, nil, logging.New("test", os.Stderr))
 
 	for name, tc := range tests {
 		tc := tc
@@ -84,7 +87,7 @@ func TestGetRuns(t *testing.T) {
 		"with jobs query not present": {"", []*run.Run{}, 400},
 		"with jobs none found":        {"mr shneebly", []*run.Run{}, 200},
 	}
-	router := rest.NewRouter("test", run.NewJobsStore(), rr, nil)
+	router := rest.NewRouter("test", run.NewJobsStore(), rr, nil, logging.New("test", os.Stderr))
 
 	for name, tc := range tests {
 		tc := tc

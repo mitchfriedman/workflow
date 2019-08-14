@@ -34,11 +34,11 @@ func NewServiceSpan(ctx context.Context, name string) (*Span, context.Context) {
 
 // NewDBSpan is a helper function to create a configured Span to be
 // used with DB repositories.
-func NewDBSpan(ctx context.Context, db *gorm.DB, name string) (*Span, context.Context) {
+func NewDBSpan(ctx context.Context, db *gorm.DB, name string) (*Span, *gorm.DB, context.Context) {
 	span, newContext := tracer.StartSpanFromContext(ctx, name, tracer.SpanType("db"))
 	internalSpan := Span{span: span, operationName: name}
 	db.Set(parentSpanGormKey, internalSpan)
-	return &internalSpan, newContext
+	return &internalSpan, db, newContext
 }
 
 // RecordError sets the error on the Span to be used in Finish.

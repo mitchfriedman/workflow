@@ -6,7 +6,10 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
+
+	"github.com/mitchfriedman/workflow/lib/logging"
 
 	testhelpers "github.com/mitchfriedman/workflow/lib/testhelpers"
 
@@ -55,7 +58,7 @@ func TestTriggers(t *testing.T) {
 		tc := tc
 		t.Run(name, func(t *testing.T) {
 			b := []byte(fmt.Sprintf(`{"job_name": %s}`, "job1"))
-			router := rest.NewRouter("test", js, rr, tc.parsers)
+			router := rest.NewRouter("test", js, rr, tc.parsers, logging.New("test", os.Stderr))
 			req := httptest.NewRequest(http.MethodPost, "/Triggers", bytes.NewBuffer(b))
 			resp := httptest.NewRecorder()
 
