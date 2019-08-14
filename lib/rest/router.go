@@ -3,6 +3,8 @@ package rest
 import (
 	"net/http"
 
+	"github.com/mitchfriedman/workflow/lib/logging"
+
 	"github.com/mitchfriedman/workflow/lib/run"
 	"gopkg.in/DataDog/dd-trace-go.v1/contrib/gorilla/mux"
 )
@@ -15,13 +17,13 @@ type Parser interface {
 }
 
 // NewRouter creates and returns a configured mux with registered routes.
-func NewRouter(serviceName string, s *run.JobStore, rr run.Repo, p []Parser) *mux.Router {
+func NewRouter(serviceName string, s *run.JobStore, rr run.Repo, p []Parser, logger logging.StructuredLogger) *mux.Router {
 	router := mux.NewRouter(mux.WithServiceName(serviceName))
-	router.HandleFunc("/Health", BuildHealthcheckHandler()).Methods("GET")
+	router.HandleFunc("/healthcheck", BuildHealthcheckHandler()).Methods("GET")
 	router.HandleFunc("/Jobs", BuildGetJobsHandler(s)).Methods("GET")
 	router.HandleFunc("/Runs", BuildGetRunsHandler(rr)).Methods("GET")
-	router.HandleFunc("/Runs/{uuid}", BuildGetRunHandler(rr)).Methods("GET")
-	router.HandleFunc("/Triggers", BuildTriggersHandler(s, rr, p)).Methods("POST")
+	router.HandleFunc("/Runs/{uuid}", BuildGetRunHandler(rr, logger)).Methods("GET")
+	router.HandleFunc("/Triggers", BuildTriggersHandler(s, rr, p, logger)).Methods("POST")
 
 	return router
 }

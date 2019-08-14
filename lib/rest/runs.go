@@ -4,6 +4,8 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/mitchfriedman/workflow/lib/logging"
+
 	"github.com/gorilla/mux"
 
 	"github.com/mitchfriedman/workflow/lib/run"
@@ -27,7 +29,7 @@ func createRepresentation(runs []*run.Run) []RunRepresentation {
 }
 
 // BuildGetRunHandler builds a HandlerFunc to get a run by the runs UUID.
-func BuildGetRunHandler(rr run.Repo) http.HandlerFunc {
+func BuildGetRunHandler(rr run.Repo, logger logging.StructuredLogger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		params := mux.Vars(r)
 		uuid := params["uuid"]
@@ -37,8 +39,10 @@ func BuildGetRunHandler(rr run.Repo) http.HandlerFunc {
 			case run.ErrNotFound:
 				respondErr(w, Error(http.StatusNotFound, err.Error()))
 			default:
+				logger.Errorf("failed to get run with uuid %s - %v", uuid, err)
 				respondErr(w, Error(http.StatusInternalServerError, err.Error()))
 			}
+			return
 		}
 		respond(w, http.StatusOK, result)
 	}
