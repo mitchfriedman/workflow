@@ -30,8 +30,15 @@ func (d InputData) UnmarshalSliceInt64(field string) []int64 {
 	}
 
 	var vals []int64
-	for _, d := range val.([]int64) {
-		vals = append(vals, d)
+	switch val.(type) {
+	case []int64:
+		for _, d := range val.([]int64) {
+			vals = append(vals, d)
+		}
+	case []interface{}:
+		for _, d := range val.([]interface{}) {
+			vals = append(vals, unmarshalAsInt64(d))
+		}
 	}
 
 	return vals
@@ -47,21 +54,18 @@ func (d InputData) UnmarshalSlice(field string, c converter) []interface{} {
 		return result
 	}
 
-	asMap, ok := val.(map[string]interface{})
-	if ok {
-		result = append(result, c(asMap))
+	switch val.(type) {
+	case map[string]interface{}:
+		result = append(result, c(val.(map[string]interface{})))
 		return result
-	}
-
-	asSliceOfMaps, ok := val.([]interface{}) //val.([]map[string]interface{})
-	if ok {
-		for _, v := range asSliceOfMaps {
+	case []interface{}:
+		for _, v := range val.([]interface{}) {
 			result = append(result, c(v.(map[string]interface{})))
 		}
 		return result
+	default:
+		return result
 	}
-
-	return result
 }
 
 func (d InputData) UnmarshalString(field string) string {
@@ -104,6 +108,30 @@ func (d InputData) UnmarshalInt(field string) int {
 	default:
 		return 0
 	}
+}
+
+func unmarshalAsInt64(val interface{}) int64 {
+	switch val.(type) {
+	case int:
+		return int64(val.(int))
+	case int32:
+		return int64(val.(int32))
+	case int64:
+		return val.(int64)
+	case float64:
+		return int64(val.(float64)) // can lose precision here.
+	case float32:
+		return int64(val.(float32))
+	case string:
+		v, err := strconv.ParseInt(val.(string), 10, 64)
+		if err != nil {
+			return 0
+		}
+		return int64(v)
+	default:
+		return 0
+	}
+
 }
 
 const InputTypeString = "string"

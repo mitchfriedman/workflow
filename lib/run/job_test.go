@@ -7,12 +7,13 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestInputData_GetSliceOfInt64(t *testing.T) {
+func TestInputData_UnmarshalSliceInt64(t *testing.T) {
 	tests := map[string]struct {
 		have interface{}
 		want interface{}
 	}{
-		"with a list of int64": {[]int64{10}, []int64{10}},
+		"with a list of int64":              {[]int64{10}, []int64{10}},
+		"with a list of interface{}{int64}": {[]interface{}{int64(10)}, []int64{10}},
 	}
 
 	for name, tc := range tests {
