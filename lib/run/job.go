@@ -23,7 +23,7 @@ func (d InputData) Merge(other InputData) InputData {
 	return n
 }
 
-func (d InputData) GetSliceOfInt64(field string) []int64 {
+func (d InputData) UnmarshalSliceInt64(field string) []int64 {
 	val, ok := d[field]
 	if !ok {
 		return []int64{}
@@ -37,20 +37,30 @@ func (d InputData) GetSliceOfInt64(field string) []int64 {
 	return vals
 }
 
-func (d InputData) GetSliceOfMaps(field string) []map[string]interface{} {
+type converter func(m map[string]interface{}) interface{}
+
+func (d InputData) UnmarshalSlice(field string, c converter) []interface{} {
+	var result []interface{}
+
 	val, ok := d[field]
 	if !ok {
-		return []map[string]interface{}{}
-	}
-	var vals []map[string]interface{}
-	for _, d := range val.([]map[string]interface{}) {
-		vals = append(vals, d)
+		return result
 	}
 
-	return vals
+	asMap, ok := val.(map[string]interface{})
+	if ok {
+		result = append(result, c(asMap))
+		return result
+	}
+
+	for _, d := range val.([]map[string]interface{}) {
+		result = append(result, c(d))
+	}
+
+	return result
 }
 
-func (d InputData) GetString(field string) string {
+func (d InputData) UnmarshalString(field string) string {
 	val := d[field]
 	switch val.(type) {
 	case int32:
@@ -68,7 +78,7 @@ func (d InputData) GetString(field string) string {
 	}
 }
 
-func (d InputData) GetInt(field string) int {
+func (d InputData) UnmarshalInt(field string) int {
 	val := d[field]
 	switch val.(type) {
 	case int:
