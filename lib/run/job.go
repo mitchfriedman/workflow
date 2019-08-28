@@ -53,8 +53,12 @@ func (d InputData) UnmarshalSlice(field string, c converter) []interface{} {
 		return result
 	}
 
-	for _, d := range val.([]map[string]interface{}) {
-		result = append(result, c(d))
+	asSliceOfMaps, ok := val.([]interface{}) //val.([]map[string]interface{})
+	if ok {
+		for _, v := range asSliceOfMaps {
+			result = append(result, c(v.(map[string]interface{})))
+		}
+		return result
 	}
 
 	return result

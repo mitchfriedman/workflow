@@ -32,8 +32,8 @@ func TestInputData_UnmarshalSlice(t *testing.T) {
 		have interface{}
 		want interface{}
 	}{
-		"with a list of map of interfaces": {[]map[string]interface{}{{"test": 10}}, []map[string]interface{}{{"test": 10}}},
-		"with a single map of interface":   {map[string]interface{}{"test": 10}, []map[string]interface{}{{"test": 10}}},
+		"with a single map of interface":                         {map[string]interface{}{"test": 10}, []map[string]interface{}{{"test": 10}}},
+		"with a single of interfaces that is a map of interface": {[]interface{}{map[string]interface{}{"test": 10}}, []map[string]interface{}{{"test": 10}}},
 	}
 
 	convert := func(m map[string]interface{}) interface{} {
