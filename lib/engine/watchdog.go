@@ -14,18 +14,18 @@ import (
 
 var watchDuration = 10 * time.Second
 
-func Watch(ctx context.Context, logger logging.StructuredLogger, wr worker.Repo, rr run.Repo) {
+func Watch(ctx context.Context, logger logging.StructuredLogger, wr worker.Repo, rr run.Repo, runExpiry time.Duration) {
 	for {
 		select {
 		case <-ctx.Done():
 			break
 		case <-time.After(watchDuration):
-			Process(ctx, logger, wr, rr)
+			Process(ctx, logger, wr, rr, runExpiry)
 		}
 	}
 }
 
-func Process(ctx context.Context, logger logging.StructuredLogger, wr worker.Repo, rr run.Repo) {
+func Process(ctx context.Context, logger logging.StructuredLogger, wr worker.Repo, rr run.Repo, runExpiry time.Duration) {
 	ctx, cancel := context.WithTimeout(context.Background(), watchDuration)
 	defer cancel()
 
@@ -34,7 +34,7 @@ func Process(ctx context.Context, logger logging.StructuredLogger, wr worker.Rep
 		return
 	}
 
-	if err := cleanupRuns(ctx, rr, wr); err != nil {
+	if err := cleanupRuns(ctx, rr, wr, runExpiry); err != nil {
 		logger.Printf("watchdog: failed to cleanup runs: %v", err)
 	}
 }
@@ -58,7 +58,7 @@ func cleanupWorkers(ctx context.Context, wr worker.Repo) error {
 	return nil
 }
 
-func cleanupRuns(ctx context.Context, rr run.Repo, wr worker.Repo) error {
+func cleanupRuns(ctx context.Context, rr run.Repo, wr worker.Repo, runExpiry time.Duration) error {
 	runs, err := rr.ClaimedRuns(ctx)
 	if err != nil {
 		return errors.Wrap(err, "failed to fetch claimed runs")
@@ -67,6 +67,15 @@ func cleanupRuns(ctx context.Context, rr run.Repo, wr worker.Repo) error {
 	for _, r := range runs {
 		// if it's currently unclaimed, there's nothing to do for this run.
 		if r.ClaimedBy == nil && r.ClaimedUntil == nil {
+			continue
+		}
+
+		// if the run is not making progress for longer than the expiry time, let's time it out.
+		if r.LastStepComplete != nil && time.Now().Sub(*r.LastStepComplete) > runExpiry {
+			r.State = run.StateError
+			if err := rr.ReleaseRun(ctx, r); err != nil {
+				return errors.Wrapf(err, "cleanupRuns: failed to abort and release run: %v", r)
+			}
 			continue
 		}
 

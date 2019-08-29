@@ -132,15 +132,13 @@ func (r *Storage) ReleaseRun(ctx context.Context, d *Run) error {
 		return err
 	}
 
-	n := time.Now().UTC()
 	d.ClaimedBy = nil
 	d.ClaimedUntil = nil
-	d.LastStepComplete = &n
 
 	updates := map[string]interface{}{
 		"claimed_by":         nil,
 		"claimed_until":      nil,
-		"last_step_complete": &n,
+		"last_step_complete": d.LastStepComplete,
 		"data":               d.Data,
 		"state":              d.State,
 		"rollback":           d.Rollback,

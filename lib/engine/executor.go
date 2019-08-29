@@ -81,6 +81,13 @@ func (p *Executor) abortRun(r *run.Run) error {
 }
 
 func (p *Executor) updateAndReleaseRun(result run.Result, r *run.Run, s *run.Step, d run.InputData) error {
+
+	// if we're doing a state transition, update the LastStepComplete timestamp.
+	if s.State != result.State {
+		n := time.Now().UTC()
+		r.LastStepComplete = &n
+	}
+
 	// Update the step state and save the output to the step.
 	// We want to do this even if the state hasn't changed because
 	// the step might put useful information into that output that

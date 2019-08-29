@@ -39,6 +39,11 @@ func TestWatchdog(t *testing.T) {
 	currentInProgressRun.ClaimedBy = &currentWorker.UUID
 	currentInProgressRun.ClaimedUntil = &later
 
+	expiredRun := testhelpers.CreateSampleRun("job", "s3", make(run.InputData))
+	expiredRun.ClaimedBy = &aWorkerID
+	expiredRun.ClaimedUntil = &later
+	expiredRun.LastStepComplete = &earlier
+
 	oldWorker := worker.NewWorker()
 	oldWorker.LastUpdated = earlier
 	oldWorker.LeaseClaimedUntil = time.Now().UTC().AddDate(0, 0, -1)
@@ -50,11 +55,12 @@ func TestWatchdog(t *testing.T) {
 		runsAfterUnclaimed []*run.Run
 		workersAfter       []*worker.Worker
 	}{
-		"with no existing workers or runs":                               {[]*run.Run{}, []*worker.Worker{}, []*run.Run{}, []*run.Run{}, []*worker.Worker{}},
-		"with runs to release":                                           {[]*run.Run{oldInProgressRun}, []*worker.Worker{}, []*run.Run{}, []*run.Run{oldInProgressRun}, []*worker.Worker{}},
-		"with runs to leave and release":                                 {[]*run.Run{oldInProgressRun, currentInProgressRun}, []*worker.Worker{currentWorker}, []*run.Run{currentInProgressRun}, []*run.Run{oldInProgressRun}, []*worker.Worker{currentWorker}},
-		"with workers to remove":                                         {[]*run.Run{}, []*worker.Worker{oldWorker}, []*run.Run{}, []*run.Run{}, []*worker.Worker{}},
-		"with workers to leave":                                          {[]*run.Run{}, []*worker.Worker{currentWorker}, []*run.Run{}, []*run.Run{}, []*worker.Worker{currentWorker}},
+		"with no existing workers or runs": {[]*run.Run{}, []*worker.Worker{}, []*run.Run{}, []*run.Run{}, []*worker.Worker{}},
+		"with runs to release":             {[]*run.Run{oldInProgressRun}, []*worker.Worker{}, []*run.Run{}, []*run.Run{oldInProgressRun}, []*worker.Worker{}},
+		"with runs to leave and release":   {[]*run.Run{oldInProgressRun, currentInProgressRun}, []*worker.Worker{currentWorker}, []*run.Run{currentInProgressRun}, []*run.Run{oldInProgressRun}, []*worker.Worker{currentWorker}},
+		"with expired runs":                {[]*run.Run{expiredRun}, []*worker.Worker{currentWorker}, []*run.Run{}, []*run.Run{expiredRun}, []*worker.Worker{currentWorker}},
+		"with workers to remove":           {[]*run.Run{}, []*worker.Worker{oldWorker}, []*run.Run{}, []*run.Run{}, []*worker.Worker{}},
+		"with workers to leave":            {[]*run.Run{}, []*worker.Worker{currentWorker}, []*run.Run{}, []*run.Run{}, []*worker.Worker{currentWorker}},
 		"with workers to leave and remove and runs to leave and release": {[]*run.Run{oldInProgressRun, currentInProgressRun}, []*worker.Worker{currentWorker, oldWorker}, []*run.Run{currentInProgressRun}, []*run.Run{oldInProgressRun}, []*worker.Worker{currentWorker}},
 	}
 
@@ -80,7 +86,7 @@ func TestWatchdog(t *testing.T) {
 				assert.Nil(t, db.Master.Create(&d).Error)
 			}
 
-			engine.Process(context.Background(), logging.New("test", os.Stderr), wr, rr)
+			engine.Process(context.Background(), logging.New("test", os.Stderr), wr, rr, 1*time.Hour)
 			var allRuns []*run.Run
 			var allWorkers []*worker.Worker
 
