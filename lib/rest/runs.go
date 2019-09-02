@@ -1,7 +1,11 @@
 package rest
 
 import (
+	"fmt"
 	"net/http"
+	"time"
+
+	"github.com/pkg/errors"
 
 	"github.com/mitchfriedman/workflow/lib/tracing"
 
@@ -14,19 +18,58 @@ import (
 
 // RunRepresentation is a JSON API response of a run
 type RunRepresentation struct {
-	Run *run.Run `json:"run"`
+	ClaimedBy    *string       `json:"claimed_by"`
+	ClaimedUntil *time.Time    `json:"claimed_until"`
+	CurrentStep  string        `json:"current_step"`
+	Finished     *time.Time    `json:"finished"`
+	Input        run.InputData `json:"input"`
+	Job          string        `json:"job"`
+	Rollback     bool          `json:"rollback"`
+	Scope        string        `json:"scope"`
+	Started      time.Time     `json:"started"`
+	State        string        `json:"state"`
+	Steps        *run.Step     `json:"step"`
+	UUID         string        `json:"uuid"`
 }
 
-func createRepresentation(runs []*run.Run) []RunRepresentation {
+func createRepresentation(runs []*run.Run) ([]RunRepresentation, error) {
 	reps := make([]RunRepresentation, len(runs), len(runs))
 	for i, r := range runs {
 		r := r
-		reps[i] = RunRepresentation{
-			Run: r,
+		rep, err := createRunRepresentation(r)
+		if err != nil {
+			return nil, err
 		}
+		reps[i] = rep
 	}
 
-	return reps
+	return reps, nil
+}
+
+func createRunRepresentation(r *run.Run) (RunRepresentation, error) {
+	current, _, err := r.NextStep()
+	if err != nil {
+		return RunRepresentation{}, errors.Wrap(err, "failed to calculate run NextStep")
+	}
+
+	var currentStep string
+	if current != nil {
+		currentStep = fmt.Sprintf("%s_%s", current.StepType, current.UUID)
+	}
+	return RunRepresentation{
+		ClaimedBy:    r.ClaimedBy,
+		ClaimedUntil: r.ClaimedUntil,
+		CurrentStep:  currentStep,
+		Finished:     r.Finished,
+		Input:        r.Input,
+		Job:          r.JobName,
+		Rollback:     r.Rollback,
+		Scope:        r.Scope,
+		Started:      r.Started,
+		State:        string(r.State),
+		UUID:         r.UUID,
+		Steps:        r.Steps,
+	}, nil
 }
 
 // BuildGetRunHandler builds a HandlerFunc to get a run by the runs UUID.
@@ -38,7 +81,7 @@ func BuildGetRunHandler(rr run.Repo, logger logging.StructuredLogger) http.Handl
 		defer span.Finish()
 		span.SetTag("uuid", uuid)
 
-		result, err := rr.GetRun(ctx, uuid)
+		found, err := rr.GetRun(ctx, uuid)
 		if err != nil {
 			switch err {
 			case run.ErrNotFound:
@@ -50,7 +93,15 @@ func BuildGetRunHandler(rr run.Repo, logger logging.StructuredLogger) http.Handl
 			}
 			return
 		}
-		respond(w, http.StatusOK, result)
+		res, err := createRunRepresentation(found)
+		if err != nil {
+			span.RecordError(err)
+			logger.Errorf("failed to marshal run %v", found, err)
+			respondErr(w, Error(http.StatusInternalServerError, err.Error()))
+			return
+		}
+
+		respond(w, http.StatusOK, res)
 	}
 }
 
@@ -76,8 +127,14 @@ func BuildGetRunsHandler(rr run.Repo) http.HandlerFunc {
 			return
 		}
 
-		result := m{"runs": createRepresentation(runs)}
+		res, err := createRepresentation(runs)
+		if err != nil {
+			span.RecordError(err)
+			respondErr(w, Error(http.StatusInternalServerError, err.Error()))
+			return
+		}
 
+		result := m{"runs": res}
 		respond(w, http.StatusOK, result)
 	}
 }

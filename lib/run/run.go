@@ -88,6 +88,10 @@ func (r *Run) NextStep() (*Step, InputData, error) {
 		return nil, nil, err
 	}
 
+	if firstQueued == nil {
+		return nil, nil, nil
+	}
+
 	// inject relevant data before this step is executed.
 	data["step_uuid"] = firstQueued.UUID
 	data["run_uuid"] = r.UUID
