@@ -28,7 +28,7 @@ type RunRepresentation struct {
 	Scope        string        `json:"scope"`
 	Started      time.Time     `json:"started"`
 	State        string        `json:"state"`
-	Steps        *run.Step     `json:"step"`
+	Steps        *run.Step     `json:"steps"`
 	UUID         string        `json:"uuid"`
 }
 
@@ -56,6 +56,11 @@ func createRunRepresentation(r *run.Run) (RunRepresentation, error) {
 	if current != nil {
 		currentStep = fmt.Sprintf("%s_%s", current.StepType, current.UUID)
 	}
+
+	if err := r.UnmarshalRunData(); err != nil {
+		return RunRepresentation{}, errors.Wrap(err, "failed to unmarshal run data")
+	}
+
 	return RunRepresentation{
 		ClaimedBy:    r.ClaimedBy,
 		ClaimedUntil: r.ClaimedUntil,
