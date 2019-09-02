@@ -37,7 +37,7 @@ func NewServiceSpan(ctx context.Context, name string) (*Span, context.Context) {
 func NewDBSpan(ctx context.Context, db *gorm.DB, name string) (*Span, *gorm.DB, context.Context) {
 	span, newContext := tracer.StartSpanFromContext(ctx, name, tracer.SpanType("db"))
 	internalSpan := Span{span: span, operationName: name}
-	db.Set(parentSpanGormKey, internalSpan)
+	db = db.Set(parentSpanGormKey, internalSpan)
 	return &internalSpan, db, newContext
 }
 

@@ -110,5 +110,7 @@ func (c *callbacks) before(scope *gorm.Scope) {
 	sp, _ := tracer.StartSpanFromContext(context.TODO(), parentSpan.operationName, tracer.SpanType("db"))
 	sp.SetTag("sql.query", scope.SQL)
 	sp.SetTag("database", scope.InstanceID())
-	scope.Set(spanGormKey, sp)
+
+	internalSpan := Span{span: sp, operationName: parentSpan.operationName}
+	scope.Set(spanGormKey, internalSpan)
 }
