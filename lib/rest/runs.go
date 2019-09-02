@@ -47,10 +47,7 @@ func createRepresentation(runs []*run.Run) ([]RunRepresentation, error) {
 }
 
 func createRunRepresentation(r *run.Run) (RunRepresentation, error) {
-	current, _, err := r.NextStep()
-	if err != nil {
-		return RunRepresentation{}, errors.Wrap(err, "failed to calculate run NextStep")
-	}
+	current := r.LastExecuted()
 
 	var currentStep string
 	if current != nil {

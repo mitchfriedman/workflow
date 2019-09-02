@@ -99,6 +99,10 @@ func (r *Run) NextStep() (*Step, InputData, error) {
 	return firstQueued, data, nil
 }
 
+func (r *Run) LastExecuted() *Step {
+	return findLastExecuted(r.Steps)
+}
+
 func findFirstQueuedStepAndHydrateInput(s *Step, d InputData) (*Step, InputData, error) {
 	if s == nil {
 		return nil, nil, nil
@@ -117,4 +121,29 @@ func findFirstQueuedStepAndHydrateInput(s *Step, d InputData) (*Step, InputData,
 	}
 
 	return nil, nil, ErrNoQueuedSteps
+}
+
+func findLastExecuted(s *Step) *Step {
+	if s == nil {
+		return nil
+	}
+
+	switch s.State {
+	case StateQueued:
+		return s
+	case StateSuccess:
+		last := findLastExecuted(s.OnSuccess)
+		if last == nil {
+			last = s
+		}
+		return last
+	case StateFailed:
+		last := findLastExecuted(s.OnFailure)
+		if last == nil {
+			last = s
+		}
+		return last
+	}
+
+	return nil
 }
