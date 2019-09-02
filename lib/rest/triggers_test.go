@@ -47,7 +47,7 @@ func TestTriggers(t *testing.T) {
 		parsers    []rest.Parser
 		wantStatus int
 	}{
-		"with no trigger parsed":                       {[]rest.Parser{parser1}, http.StatusBadRequest},
+		"with no trigger parsed":                       {[]rest.Parser{parser1}, http.StatusOK},
 		"with a trigger error":                         {[]rest.Parser{parser2}, http.StatusInternalServerError},
 		"with no trigger parsed then error":            {[]rest.Parser{parser1, parser2}, http.StatusInternalServerError},
 		"with successful parse":                        {[]rest.Parser{parser3}, http.StatusOK},

@@ -1,8 +1,9 @@
 package rest
 
 import (
-	"context"
 	"net/http"
+
+	"github.com/mitchfriedman/workflow/lib/tracing"
 
 	"github.com/mitchfriedman/workflow/lib/logging"
 
@@ -33,12 +34,17 @@ func BuildGetRunHandler(rr run.Repo, logger logging.StructuredLogger) http.Handl
 	return func(w http.ResponseWriter, r *http.Request) {
 		params := mux.Vars(r)
 		uuid := params["uuid"]
-		result, err := rr.GetRun(context.Background(), uuid)
+		span, ctx := tracing.NewServiceSpan(r.Context(), "get_run")
+		defer span.Finish()
+		span.SetTag("uuid", uuid)
+
+		result, err := rr.GetRun(ctx, uuid)
 		if err != nil {
 			switch err {
 			case run.ErrNotFound:
 				respondErr(w, Error(http.StatusNotFound, err.Error()))
 			default:
+				span.RecordError(err)
 				logger.Errorf("failed to get run with uuid %s - %v", uuid, err)
 				respondErr(w, Error(http.StatusInternalServerError, err.Error()))
 			}
@@ -58,8 +64,14 @@ func BuildGetRunsHandler(rr run.Repo) http.HandlerFunc {
 		}
 		job := jobParam[0]
 
-		runs, err := rr.ListByJob(context.TODO(), job)
+		ctx := r.Context()
+		span, ctx := tracing.NewServiceSpan(ctx, "list_runs_by_job")
+		defer span.Finish()
+		span.SetTag("job_type", job)
+
+		runs, err := rr.ListByJob(ctx, job)
 		if err != nil {
+			span.RecordError(err)
 			respondErr(w, Error(http.StatusInternalServerError, err.Error()))
 			return
 		}
