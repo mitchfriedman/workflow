@@ -56,7 +56,6 @@ func (c *callbacks) afterRowQuery(scope *gorm.Scope)  { c.after(scope, "") }
 func (c *callbacks) after(scope *gorm.Scope, operation string) {
 	val, ok := scope.Get(spanGormKey)
 	if !ok {
-		c.logger.Warnf("failed to fetch span from scope. Did `before` fail?")
 		return
 	}
 	sp := val.(Span)
@@ -100,7 +99,6 @@ func registerCallbacks(db *gorm.DB, name string, c *callbacks) {
 func (c *callbacks) before(scope *gorm.Scope) {
 	val, ok := scope.Get(parentSpanGormKey)
 	if !ok {
-		c.logger.Warnf("failed to fetch parent span from gorm scope. Did you forget to call `NewDBSpan`?")
 		return
 	}
 
