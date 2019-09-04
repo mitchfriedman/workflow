@@ -50,7 +50,12 @@ func createRunRepresentation(r *run.Run) (RunRepresentation, error) {
 	current := r.CurrentStep()
 
 	var currentStep string
-	if current != nil {
+	switch {
+	case current == nil:
+		break
+	case current.Terminal():
+		currentStep = "completed"
+	default:
 		currentStep = fmt.Sprintf("%s_%s", current.StepType, current.UUID)
 	}
 
@@ -95,6 +100,14 @@ func BuildGetRunHandler(rr run.Repo, logger logging.StructuredLogger) http.Handl
 			}
 			return
 		}
+
+		if err := found.UnmarshalRunData(); err != nil {
+			span.RecordError(err)
+			logger.Errorf("failed to unmarhsal run data: %v", found, err)
+			respondErr(w, Error(http.StatusInternalServerError, err.Error()))
+			return
+		}
+
 		res, err := createRunRepresentation(found)
 		if err != nil {
 			span.RecordError(err)

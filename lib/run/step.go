@@ -41,6 +41,10 @@ func InputSatisfied(data InputData, requiredInput []Input) error {
 	return nil
 }
 
+func (s *Step) Terminal() bool {
+	return s.OnSuccess == nil && s.OnFailure == nil
+}
+
 type Result struct {
 	State State     `json:"state"`
 	Data  InputData `json:"data"`

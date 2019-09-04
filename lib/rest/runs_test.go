@@ -47,7 +47,7 @@ func TestGetRun(t *testing.T) {
 			router.ServeHTTP(resp, req)
 			assert.Equal(t, tc.wantStatus, resp.Code)
 			if tc.wantRun != nil {
-				var result *run.Run
+				var result *rest.RunRepresentation
 				resultFrom(t, &result, resp.Body)
 				assert.Equal(t, tc.wantRun.UUID, result.UUID)
 			}
