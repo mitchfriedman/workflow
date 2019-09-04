@@ -33,6 +33,55 @@ func TestSatisfied(t *testing.T) {
 	}
 }
 
+func TestLastExecuted(t *testing.T) {
+	// currently on first step
+	r1 := testhelpers.CreateSampleRun("job", "s1", nil)
+
+	// currently on second step
+	r2 := testhelpers.CreateSampleRun("job", "s1", nil)
+	r2.Steps.State = run.StateSuccess
+
+	// currently on third (last) step
+	r3 := testhelpers.CreateSampleRun("job", "s1", nil)
+	r3.Steps.State = run.StateSuccess
+	r3.Steps.OnSuccess.State = run.StateSuccess
+
+	// completed
+	r4 := testhelpers.CreateSampleRun("job", "s1", nil)
+	r4.Steps.State = run.StateSuccess
+	r4.Steps.OnSuccess.State = run.StateSuccess
+	r4.Steps.OnSuccess.OnSuccess.State = run.StateSuccess
+
+	// on second step via OnFailure
+	r5 := testhelpers.CreateSampleRun("job", "s1", nil)
+	r5.Steps.State = run.StateFailed
+
+	// on third step via OnFailure then OnSuccess
+	r6 := testhelpers.CreateSampleRun("job", "s1", nil)
+	r6.Steps.State = run.StateFailed
+	r6.Steps.OnFailure.State = run.StateSuccess
+
+	tests := map[string]struct {
+		run      *run.Run
+		wantStep string
+	}{
+		"on first step":                              {run: r1, wantStep: r1.Steps.StepType},
+		"on second step via OnSuccess":               {run: r2, wantStep: r2.Steps.OnSuccess.StepType},
+		"on last step via OnSuccess":                 {run: r3, wantStep: r3.Steps.OnSuccess.OnSuccess.StepType},
+		"once it's completed":                        {run: r4, wantStep: r4.Steps.OnSuccess.OnSuccess.OnSuccess.StepType},
+		"on second step via OnFailure":               {run: r5, wantStep: r5.Steps.OnFailure.StepType},
+		"on third step via OnFailure then OnSuccess": {run: r6, wantStep: r6.Steps.OnFailure.OnSuccess.StepType},
+	}
+
+	for name, tc := range tests {
+		tc := tc
+		t.Run(name, func(t *testing.T) {
+			current := tc.run.CurrentStep()
+			assert.Equal(t, tc.wantStep, current.StepType)
+		})
+	}
+}
+
 func TestNextStep(t *testing.T) {
 	jobInput := map[string]interface{}{
 		"foo": "bar",

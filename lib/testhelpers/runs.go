@@ -48,8 +48,8 @@ func CreateSampleRun(jobName, scope string, input run.InputData) *run.Run {
 	*/
 	hello := CreateStep("say_hello")
 	ask := CreateStep("ask_question")
-	goodbye := CreateStep("say_goodbye")
-	goodbye2 := CreateStep("say_goodbye")
+	goodbye := CreateStep("say_goodbye1")
+	goodbye2 := CreateStep("say_goodbye2")
 	hello.OnSuccess = ask
 	ask.OnSuccess = goodbye
 	ask.OnFailure = goodbye

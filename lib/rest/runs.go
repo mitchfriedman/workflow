@@ -47,7 +47,7 @@ func createRepresentation(runs []*run.Run) ([]RunRepresentation, error) {
 }
 
 func createRunRepresentation(r *run.Run) (RunRepresentation, error) {
-	current := r.LastExecuted()
+	current := r.CurrentStep()
 
 	var currentStep string
 	if current != nil {

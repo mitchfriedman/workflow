@@ -99,8 +99,8 @@ func (r *Run) NextStep() (*Step, InputData, error) {
 	return firstQueued, data, nil
 }
 
-func (r *Run) LastExecuted() *Step {
-	return findLastExecuted(r.Steps)
+func (r *Run) CurrentStep() *Step {
+	return findCurrentStep(r.Steps)
 }
 
 func findFirstQueuedStepAndHydrateInput(s *Step, d InputData) (*Step, InputData, error) {
@@ -123,22 +123,22 @@ func findFirstQueuedStepAndHydrateInput(s *Step, d InputData) (*Step, InputData,
 	return nil, nil, ErrNoQueuedSteps
 }
 
-func findLastExecuted(s *Step) *Step {
+func findCurrentStep(s *Step) *Step {
 	if s == nil {
 		return nil
 	}
 
 	switch s.State {
-	case StateQueued:
+	case StateQueued, StateError:
 		return s
 	case StateSuccess:
-		last := findLastExecuted(s.OnSuccess)
+		last := findCurrentStep(s.OnSuccess)
 		if last == nil {
 			last = s
 		}
 		return last
 	case StateFailed:
-		last := findLastExecuted(s.OnFailure)
+		last := findCurrentStep(s.OnFailure)
 		if last == nil {
 			last = s
 		}
