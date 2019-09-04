@@ -65,7 +65,7 @@ func (r *Storage) SearchForRun(ctx context.Context, job, scope, state string) (*
 	case gorm.ErrRecordNotFound:
 		return nil, ErrNotFound
 	default:
-		return nil, err
+		return &run, err
 	}
 }
 
