@@ -11,7 +11,7 @@ import (
 
 	"github.com/mitchfriedman/workflow/lib/logging"
 
-	testhelpers "github.com/mitchfriedman/workflow/lib/testhelpers"
+	"github.com/mitchfriedman/workflow/lib/testhelpers"
 
 	"github.com/stretchr/testify/assert"
 

@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/mitchfriedman/workflow/lib/run"
-	testhelpers "github.com/mitchfriedman/workflow/lib/testhelpers"
+	"github.com/mitchfriedman/workflow/lib/testhelpers"
 
 	"github.com/stretchr/testify/assert"
 )

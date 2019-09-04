@@ -20,7 +20,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	testhelpers "github.com/mitchfriedman/workflow/lib/testhelpers"
+	"github.com/mitchfriedman/workflow/lib/testhelpers"
 )
 
 func setupRun(t *testing.T, rr run.Repo) string {

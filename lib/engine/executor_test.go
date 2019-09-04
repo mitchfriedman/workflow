@@ -9,7 +9,7 @@ import (
 
 	"github.com/mitchfriedman/workflow/lib/engine"
 	"github.com/mitchfriedman/workflow/lib/run"
-	testhelpers "github.com/mitchfriedman/workflow/lib/testhelpers"
+	"github.com/mitchfriedman/workflow/lib/testhelpers"
 )
 
 func TestCalculateRunStateTransition(t *testing.T) {
