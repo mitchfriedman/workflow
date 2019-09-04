@@ -25,6 +25,7 @@ type Retriever interface {
 	ClaimedRuns(context.Context) ([]*Run, error)
 	ListByJob(context.Context, string) ([]*Run, error)
 	GetRun(context.Context, string) (*Run, error)
+	SearchForRun(context.Context, string, string, string) (*Run, error)
 }
 
 type Claimer interface {
@@ -46,6 +47,26 @@ func NewDatabaseStorage(db *database.DB) *Storage {
 
 func (r *Storage) GetRun(ctx context.Context, uuid string) (*Run, error) {
 	return r.getRunByUUID(ctx, uuid)
+}
+
+func (r *Storage) SearchForRun(ctx context.Context, job, scope, state string) (*Run, error) {
+	var run Run
+	span, db, ctx := tracing.NewDBSpan(ctx, r.db.Reader, "run.SearchForRun")
+	err := db.Model(&run).
+		Where("job_name = ?", job).
+		Where("scope = ?", scope).
+		Where("state = ?", state).
+		First(&run).Error
+
+	span.RecordError(err)
+	span.Finish()
+
+	switch err {
+	case gorm.ErrRecordNotFound:
+		return nil, ErrNotFound
+	default:
+		return nil, err
+	}
 }
 
 func (r *Storage) getRunByUUID(ctx context.Context, uuid string) (*Run, error) {
