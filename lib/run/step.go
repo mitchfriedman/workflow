@@ -27,6 +27,8 @@ type Step struct {
 	StepType  string    `json:"step_type"`
 }
 
+const failureReason = "failure_reason"
+
 var ErrMissingRequiredInput = errors.New("required input is missing")
 
 func InputSatisfied(data InputData, requiredInput []Input) error {
@@ -43,6 +45,17 @@ func InputSatisfied(data InputData, requiredInput []Input) error {
 
 func (s *Step) Terminal() bool {
 	return s.OnSuccess == nil && s.OnFailure == nil
+}
+
+func (s *Step) Fail(m string) {
+	s.State = StateFailed
+	s.Output = Result{
+		Data: InputData{
+			failureReason: m,
+		},
+		State: StateFailed,
+		Error: m,
+	}
 }
 
 type Result struct {

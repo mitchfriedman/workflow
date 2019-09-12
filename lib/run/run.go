@@ -99,6 +99,17 @@ func (r *Run) NextStep() (*Step, InputData, error) {
 	return firstQueued, data, nil
 }
 
+func (r *Run) Fail(m string) {
+	r.State = StateFailed
+	r.Rollback = true
+	if curStep := r.CurrentStep(); curStep != nil {
+		curStep.Fail(m)
+	} else {
+		// if there is no next state, we've reached an error state
+		r.State = StateError
+	}
+}
+
 func (r *Run) CurrentStep() *Step {
 	return findCurrentStep(r.Steps)
 }

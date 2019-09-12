@@ -2,6 +2,7 @@ package engine
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/mitchfriedman/workflow/lib/logging"
@@ -70,9 +71,10 @@ func cleanupRuns(ctx context.Context, rr run.Repo, wr worker.Repo, runExpiry tim
 			continue
 		}
 
-		// if the run is not making progress for longer than the expiry time, let's time it out.
+		// if the run is not making progress for longer than the expiry time, let's time it out and move it into
+		// the failure state.
 		if r.LastStepComplete != nil && time.Now().Sub(*r.LastStepComplete) > runExpiry {
-			r.State = run.StateError
+			r.Fail(fmt.Sprintf("step timed out after %s", runExpiry.String()))
 			if err := rr.ReleaseRun(ctx, r); err != nil {
 				return errors.Wrapf(err, "cleanupRuns: failed to abort and release run: %v", r)
 			}

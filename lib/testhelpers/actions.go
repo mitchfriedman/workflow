@@ -20,7 +20,7 @@ func CreateStep(t string) *run.Step {
 		UUID:     pID,
 		StepType: t,
 		State:    run.StateQueued,
-		Input:    nil,
+		Input:    run.InputData{},
 		Output:   run.Result{Data: make(map[string]interface{})},
 	}
 }
