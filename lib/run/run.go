@@ -100,7 +100,6 @@ func (r *Run) NextStep() (*Step, InputData, error) {
 }
 
 func (r *Run) Fail(m string) {
-	r.State = StateFailed
 	r.Rollback = true
 	if curStep := r.CurrentStep(); curStep != nil {
 		curStep.Fail(m)
