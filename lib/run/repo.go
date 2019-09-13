@@ -156,6 +156,11 @@ func (r *Storage) ReleaseRun(ctx context.Context, d *Run) error {
 	d.ClaimedBy = nil
 	d.ClaimedUntil = nil
 
+	if d.Terminal() {
+		n := time.Now()
+		d.Finished = &n
+	}
+
 	updates := map[string]interface{}{
 		"claimed_by":         nil,
 		"claimed_until":      nil,

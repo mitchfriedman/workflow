@@ -76,7 +76,7 @@ func (p *Executor) Execute(ctx context.Context) (err error) {
 }
 
 func (p *Executor) abortRun(r *run.Run) error {
-	r.State = run.StateError
+	r.Abort()
 	return p.runRepo.ReleaseRun(context.TODO(), r)
 }
 

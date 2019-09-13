@@ -109,6 +109,10 @@ func (r *Run) Fail(m string) {
 	}
 }
 
+func (r *Run) Abort() {
+	r.State = StateError
+}
+
 func (r *Run) CurrentStep() *Step {
 	return findCurrentStep(r.Steps)
 }
