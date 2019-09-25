@@ -68,6 +68,7 @@ func TestInputData_GetString(t *testing.T) {
 		have interface{}
 		want interface{}
 	}{
+		"not present":    {nil, ""},
 		"with an int32":  {int32(10), "10"},
 		"with an int62":  {int64(10), "10"},
 		"with a string":  {"10", "10"},
@@ -78,8 +79,9 @@ func TestInputData_GetString(t *testing.T) {
 	for name, tc := range tests {
 		tc := tc
 		t.Run(name, func(t *testing.T) {
-			d := run.InputData{
-				"val": tc.have,
+			d := run.InputData{}
+			if tc.have != nil {
+				d["val"] = tc.have
 			}
 
 			assert.Equal(t, tc.want, d.UnmarshalString("val"))
@@ -92,6 +94,7 @@ func TestInputData_GetInt(t *testing.T) {
 		have interface{}
 		want interface{}
 	}{
+		"not present":    {nil, 0},
 		"with an int32":  {int32(10), 10},
 		"with an int62":  {int64(10), 10},
 		"with a string":  {"10", 10},
@@ -102,8 +105,9 @@ func TestInputData_GetInt(t *testing.T) {
 	for name, tc := range tests {
 		tc := tc
 		t.Run(name, func(t *testing.T) {
-			d := run.InputData{
-				"val": tc.have,
+			d := run.InputData{}
+			if tc.have != nil {
+				d["val"] = tc.have
 			}
 
 			assert.Equal(t, tc.want, d.UnmarshalInt("val"))

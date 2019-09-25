@@ -69,7 +69,11 @@ func (d InputData) UnmarshalSlice(field string, c converter) []interface{} {
 }
 
 func (d InputData) UnmarshalString(field string) string {
-	val := d[field]
+	val, ok := d[field]
+	if !ok {
+		return ""
+	}
+
 	switch val.(type) {
 	case int32:
 		return strconv.Itoa(int(val.(int32)))
@@ -87,7 +91,11 @@ func (d InputData) UnmarshalString(field string) string {
 }
 
 func (d InputData) UnmarshalInt(field string) int {
-	val := d[field]
+	val, ok := d[field]
+	if !ok {
+		return 0
+	}
+
 	switch val.(type) {
 	case int:
 		return val.(int)
@@ -127,7 +135,7 @@ func unmarshalAsInt64(val interface{}) int64 {
 		if err != nil {
 			return 0
 		}
-		return int64(v)
+		return v
 	default:
 		return 0
 	}
