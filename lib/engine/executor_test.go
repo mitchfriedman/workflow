@@ -50,13 +50,6 @@ func TestExecutor(t *testing.T) {
 	defer closer()
 	repo := run.NewDatabaseStorage(db)
 	ss := testhelpers.CreateStepperStore()
-
-	r := testhelpers.CreateSampleRun("job", "s1", make(run.InputData))
-	r.Steps.OnSuccess.OnSuccess.OnSuccess = nil
-	assert.Nil(t, repo.CreateRun(context.Background(), r))
-
-	executor := engine.NewExecutor("123", repo, ss)
-
 	getRun := func(runId string) *run.Run {
 		var r run.Run
 		assert.Nil(t, db.Master.Where("uuid = ?", runId).First(&r).Error)
@@ -64,24 +57,53 @@ func TestExecutor(t *testing.T) {
 		assert.Nil(t, r.UnmarshalRunData())
 		return &r
 	}
+	//r1 := testhelpers.CreateSampleRun("job1", "s1", make(run.InputData))
+	//r1.Steps.OnSuccess.OnSuccess.OnSuccess = nil
 
-	var timeBegin time.Time
-	for i := 0; i < 3; i++ { // 3 steps in run.
-		timeBegin = time.Now().UTC()
-		err := executor.Execute(context.Background())
-		assert.Nil(t, err)
-		r := getRun(r.UUID)
-		assert.NotNil(t, r.LastStepComplete)
-		assert.True(t, r.LastStepComplete.After(timeBegin))
+	r2 := testhelpers.CreateSampleRun("job2", "s2", make(run.InputData))
+	failureStep := testhelpers.CreateStep("failure")
+	failureStep.OnFailure = nil
+	failureStep.OnSuccess = nil
+	ss.Register(testhelpers.NewSampleStep(run.Result{State: run.StateFailed, Error: "fail"}, "failure", nil))
+	r2.Steps.OnSuccess = failureStep
+
+	executor := engine.NewExecutor("123", repo, ss)
+
+	tests := map[string]struct {
+		r        *run.Run
+		wantErr  string
+		numSteps int
+	}{
+		//"with 3 success steps": {r: r1, numSteps: 3},
+		"with 2 step": {r: r2, wantErr: "fail", numSteps: 2},
 	}
 
-	// if we try to execute again, we shouldn't find any runs since this one is completed.
-	err := executor.Execute(context.Background())
-	assert.Equal(t, engine.ErrNoRuns, err)
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			assert.Nil(t, repo.CreateRun(context.Background(), tc.r))
+			var timeBegin time.Time
+			for i := 0; i < tc.numSteps; i++ { // 3 steps in run.
+				timeBegin = time.Now().UTC()
+				err := executor.Execute(context.Background())
+				assert.Nil(t, err)
+				r := getRun(tc.r.UUID)
+				assert.NotNil(t, r.LastStepComplete)
+				assert.True(t, r.LastStepComplete.After(timeBegin))
+				if tc.wantErr != "" && i == tc.numSteps-1 {
+					currentStep := r.CurrentStep()
+					assert.Equal(t, tc.wantErr, currentStep.Output.Data.UnmarshalString("error_message"))
+				}
+			}
 
-	// ensure that all steps have input
-	r = getRun(r.UUID)
-	ensureStepsContainInput(t, r.Steps)
+			// if we try to execute again, we shouldn't find any runs since this one is completed.
+			err := executor.Execute(context.Background())
+			assert.Equal(t, engine.ErrNoRuns, err)
+
+			// ensure that all steps have input
+			r := getRun(tc.r.UUID)
+			ensureStepsContainInput(t, r.Steps)
+		})
+	}
 }
 
 func ensureStepsContainInput(t *testing.T, s *run.Step) {
