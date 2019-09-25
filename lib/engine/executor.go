@@ -88,6 +88,10 @@ func (p *Executor) updateAndReleaseRun(result run.Result, r *run.Run, s *run.Ste
 		r.LastStepComplete = &n
 	}
 
+	if result.Error != "" {
+		d["error_message"] = result.Error
+	}
+
 	// Update the step state and save the output to the step.
 	// We want to do this even if the state hasn't changed because
 	// the step might put useful information into that output that
