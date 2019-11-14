@@ -91,7 +91,7 @@ func TestExecutor(t *testing.T) {
 				assert.True(t, r.LastStepComplete.After(timeBegin))
 				if tc.wantErr != "" && i == tc.numSteps-1 {
 					currentStep := r.CurrentStep()
-					assert.Equal(t, tc.wantErr, currentStep.Output.Data.UnmarshalString("error_message"))
+					assert.Equal(t, tc.wantErr, currentStep.Output.Data.UnmarshalString("failure_message"))
 				}
 			}
 

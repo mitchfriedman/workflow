@@ -92,7 +92,7 @@ func (p *Executor) updateAndReleaseRun(result run.Result, r *run.Run, s *run.Ste
 		if result.Data == nil {
 			result.Data = run.InputData{}
 		}
-		result.Data["error_message"] = result.Error
+		result.Data["failure_message"] = result.Error
 	}
 
 	// Update the step state and save the output to the step.
