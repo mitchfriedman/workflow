@@ -27,7 +27,7 @@ type Step struct {
 	StepType  string    `json:"step_type"`
 }
 
-const failureReason = "failure_reason"
+const failureReason = "failure_message"
 
 var ErrMissingRequiredInput = errors.New("required input is missing")
 
