@@ -24,6 +24,7 @@ type Retriever interface {
 	NextRuns(context.Context) ([]*Run, error)
 	ClaimedRuns(context.Context) ([]*Run, error)
 	ListByJob(context.Context, string) ([]*Run, error)
+	ListByJobScope(context.Context, string, string) ([]*Run, error)
 	GetRun(context.Context, string) (*Run, error)
 	SearchForRun(context.Context, string, string, string) (*Run, error)
 }
@@ -210,6 +211,19 @@ func (r *Storage) ListByJob(ctx context.Context, job string) ([]*Run, error) {
 	var runs []*Run
 	span, db, ctx := tracing.NewDBSpan(ctx, r.db.Reader, "run.list_by_job")
 	err := db.Where("job_name = ?", job).Find(&runs).Error
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to query runs by job: %s", job)
+	}
+	span.RecordError(err)
+	span.Finish()
+
+	return runs, nil
+}
+
+func (r *Storage) ListByJobScope(ctx context.Context, job, scope string) ([]*Run, error) {
+	var runs []*Run
+	span, db, ctx := tracing.NewDBSpan(ctx, r.db.Reader, "run.list_by_job_scope")
+	err := db.Where("job_name = ?", job).Where("scope = ?", scope).Find(&runs).Error
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to query runs by job: %s", job)
 	}

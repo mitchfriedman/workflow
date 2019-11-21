@@ -177,12 +177,24 @@ func BuildGetRunsHandler(rr run.Repo) http.HandlerFunc {
 		}
 		job := jobParam[0]
 
+		scopeParam, ok := r.URL.Query()["scope"]
+		var scope string
+		if ok && len(scopeParam) == 1 {
+			scope = scopeParam[0]
+		}
+
 		ctx := r.Context()
 		span, ctx := tracing.NewServiceSpan(ctx, "list_runs_by_job")
 		defer span.Finish()
 		span.SetTag("job_type", job)
 
-		runs, err := rr.ListByJob(ctx, job)
+		var runs []*run.Run
+		var err error
+		if scope == "" {
+			runs, err = rr.ListByJob(ctx, job)
+		} else {
+			runs, err = rr.ListByJobScope(ctx, job, scope)
+		}
 		if err != nil {
 			span.RecordError(err)
 			respondErr(w, Error(http.StatusInternalServerError, err.Error()))

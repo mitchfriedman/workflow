@@ -118,12 +118,14 @@ func TestGetRuns(t *testing.T) {
 
 	tests := map[string]struct {
 		job            string
+		scope          string
 		expectedRuns   []*run.Run
 		expectedStatus int
 	}{
-		"with jobs present":           {"job1", []*run.Run{j1s1, j2s1, js1s12}, 200},
-		"with jobs query not present": {"", []*run.Run{}, 400},
-		"with jobs none found":        {"mr shneebly", []*run.Run{}, 200},
+		"with jobs present":           {"job1", "", []*run.Run{j1s1, j2s1, js1s12}, 200},
+		"with jobs scope filter":      {"job1", "s1", []*run.Run{j1s1, j2s1, js1s12}, 200},
+		"with jobs query not present": {"", "", []*run.Run{}, 400},
+		"with jobs none found":        {"mr shneebly", "", []*run.Run{}, 200},
 	}
 	router := rest.NewRouter("test", run.NewJobsStore(), rr, nil, logging.New("test", os.Stderr))
 
