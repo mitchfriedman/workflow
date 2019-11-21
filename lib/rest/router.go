@@ -23,6 +23,7 @@ func NewRouter(serviceName string, s *run.JobStore, rr run.Repo, p []Parser, log
 	router.HandleFunc("/Jobs", BuildGetJobsHandler(s)).Methods("GET")
 	router.HandleFunc("/Runs", BuildGetRunsHandler(rr)).Methods("GET")
 	router.HandleFunc("/Runs/{uuid}", BuildGetRunHandler(rr, logger)).Methods("GET")
+	router.HandleFunc("/Runs/{uuid}/Cancel", BuildCancelRunHandler(rr, logger)).Methods("POST")
 	router.HandleFunc("/Triggers", BuildTriggersHandler(s, rr, p, logger)).Methods("POST")
 
 	return router

@@ -3,6 +3,7 @@ package rest_test
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -18,6 +19,43 @@ import (
 
 	"github.com/stretchr/testify/assert"
 )
+
+func TestCancelRun(t *testing.T) {
+	db, closer := testhelpers.DBConnection(t, false)
+	defer closer()
+
+	r1 := testhelpers.CreateSampleRun("job1", "s1", make(run.InputData))
+	rr := run.NewDatabaseStorage(db)
+	rr.CreateRun(context.Background(), r1)
+
+	tests := map[string]struct {
+		uuid       string
+		wantRun    *run.Run
+		wantStatus int
+	}{
+		"with run present":  {r1.UUID, r1, 200},
+		"with no run found": {"other", nil, 404},
+	}
+
+	router := rest.NewRouter("test", run.NewJobsStore(), rr, nil, logging.New("test", os.Stderr))
+
+	for name, tc := range tests {
+		tc := tc
+		t.Run(name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/Runs/%s/Cancel", tc.uuid), nil)
+			resp := httptest.NewRecorder()
+
+			router.ServeHTTP(resp, req)
+			assert.Equal(t, tc.wantStatus, resp.Code)
+			if tc.wantRun != nil {
+				var result *rest.RunRepresentation
+				resultFrom(t, &result, resp.Body)
+				assert.Equal(t, tc.wantRun.UUID, result.UUID)
+				assert.Equal(t, run.StateError, run.State(result.State))
+			}
+		})
+	}
+}
 
 func TestGetRun(t *testing.T) {
 	db, closer := testhelpers.DBConnection(t, false)

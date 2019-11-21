@@ -79,6 +79,53 @@ func createRunRepresentation(r *run.Run) (RunRepresentation, error) {
 	}, nil
 }
 
+func BuildCancelRunHandler(rr run.Repo, logger logging.StructuredLogger) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		params := mux.Vars(r)
+		uuid := params["uuid"]
+		span, ctx := tracing.NewServiceSpan(r.Context(), "cancel_run")
+		defer span.Finish()
+		span.SetTag("uuid", uuid)
+
+		found, err := rr.GetRun(ctx, uuid)
+		if err != nil {
+			switch err {
+			case run.ErrNotFound:
+				respondErr(w, Error(http.StatusNotFound, err.Error()))
+			default:
+				span.RecordError(err)
+				logger.Errorf("failed to get run with uuid %s - %v", uuid, err)
+				respondErr(w, Error(http.StatusInternalServerError, err.Error()))
+			}
+			return
+		}
+
+		found.Fail("canceled by user")
+		if err := rr.ReleaseRun(ctx, found); err != nil {
+			span.RecordError(err)
+			logger.Errorf("failed to cancel run with uuid %s - %v", uuid, err)
+			respondErr(w, Error(http.StatusInternalServerError, err.Error()))
+		}
+
+		if err := found.UnmarshalRunData(); err != nil {
+			span.RecordError(err)
+			logger.Errorf("failed to unmarshal run data: %v", found, err)
+			respondErr(w, Error(http.StatusInternalServerError, err.Error()))
+			return
+		}
+
+		res, err := createRunRepresentation(found)
+		if err != nil {
+			span.RecordError(err)
+			logger.Errorf("failed to marshal run %v", found, err)
+			respondErr(w, Error(http.StatusInternalServerError, err.Error()))
+			return
+		}
+
+		respond(w, http.StatusOK, res)
+	}
+}
+
 // BuildGetRunHandler builds a HandlerFunc to get a run by the runs UUID.
 func BuildGetRunHandler(rr run.Repo, logger logging.StructuredLogger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -103,7 +150,7 @@ func BuildGetRunHandler(rr run.Repo, logger logging.StructuredLogger) http.Handl
 
 		if err := found.UnmarshalRunData(); err != nil {
 			span.RecordError(err)
-			logger.Errorf("failed to unmarhsal run data: %v", found, err)
+			logger.Errorf("failed to unmarshal run data: %v", found, err)
 			respondErr(w, Error(http.StatusInternalServerError, err.Error()))
 			return
 		}
